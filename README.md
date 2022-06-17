@@ -27,67 +27,44 @@ rm *.o
 
 
 Root Dependencies:
-sudo apt-get install git dpkg-dev cmake g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev gfortran libssl-dev libpcre3-dev xlibmesa-glu-dev libglew1.5-dev libftgl-dev libmysqlclient-dev libfftw3-dev libcfitsio-dev graphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python-dev libxml2-dev libkrb5-dev libgsl0-dev #libqt4-dev
+```
+sudo apt-get install dpkg-dev cmake g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev python libssl-dev gfortran libpcre3-dev xlibmesa-glu-dev libglew1.5-dev libftgl-dev libmysqlclient-dev libfftw3-dev libcfitsio-dev graphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python-dev libxml2-dev libkrb5-dev libgsl0-dev qtwebengine5-dev
+```
 
-Root5.34.36: // fatal error : iostream.h not found
-tar -zxvf root_v5.34.36.source.tar.gz
-mv root root_v5.34.36
-cd root_v5.34.36
-./configure
-./configure --enable-gdml
-
-
-CMake Root5.34.38: // not worked
-tar -zxvf root_v5.34.38.source.tar.gz
-rm root_v5.34.38
-mv root root_v5.34.38
-mkdir root_v5.34.38-build
-cd root_v5.34.38-build
-cmake -Dgdml=ON -Dpythia6=OFF -Dpythia8=OFF -DCMAKE_INSTALL_PREFIX=/home/surya/products/root_v5.34.38/ /home/surya/products/root_v5.34.38/
-make -j2
-make install
-
-
-
-CMake Root6.14.00: Less flags
-tar -zxvf root_v6.14.00.source.tar.gz
-mv root-6.14.00 root_v6.14.00-source
-mkdir root_v6.14.00-build
-cd root_v6.14.00-build
-cmake -Dgdml=ON -DCMAKE_INSTALL_PREFIX=/home/surya/products/root_v6.14.00-install/ /home/surya/products/root_v6.14.00-source/
-
-
-CMake Root6.22.08: Less flags : worked
-wget https://root.cern/download/root_v6.22.08.source.tar.gz
-tar -zxvf root_v6.22.08.source.tar.gz
-rm -rf root_v6.22.08
-mv root-6.22.08 root_v6.22.08
-mkdir root_v6.22.08-build
-cd root_v6.22.08-build
-#cmake -Dgdml=ON -Dpythia6=OFF -Dpythia8=OFF -DCMAKE_INSTALL_PREFIX=/home/surya/products/ROOT/root_v6.22.08/ /home/surya/products/ROOT/root_v6.22.08/
-cmake -Dminimal=ON -Dgdml=ON -Dminuit2=ON -DCMAKE_INSTALL_PREFIX=/home/surya/products/ROOT/root_v6.22.08/ /home/surya/products/ROOT/root_v6.22.08/
+CMake Root6.26.04: Less flags : worked
+```
+wget https://root.cern/download/root_v6.26.04.source.tar.gz
+tar -zxvf root_v6.26.04.source.tar.gz
+rm -rf root_v6.26.04
+mv root-6.26.04 root_v6.26.04
+mkdir root_v6.26.04-build
+cd root_v6.26.04-build
+#cmake -Dgdml=ON -Dpythia6=OFF -Dpythia8=OFF -DCMAKE_INSTALL_PREFIX=/home/surya/products/ROOT/root_v6.26.04/ /home/surya/products/ROOT/root_v6.26.04/
+cmake -Dminimal=ON -Dgdml=ON -Dminuit2=ON -DCMAKE_INSTALL_PREFIX=/home/surya/products/ROOT/root_v6.26.04/ /home/surya/products/ROOT/root_v6.26.04/
 make -j2
 make install
 cd ..
-rm -rf root_v6.22.08-build
-
+rm -rf root_v6.26.04-build
+```
 ### "modules" error: Solved by editing some file: contact jim
 ### solved by adding adding "/modules/" before RootMacros.cmake
 
 
 
 CMake Root6:
+```
 cmake -Dgdml=ON -Dbuiltin_gsl=ON -Dmathmore=ON -Dpythia6=ON -Dpythia8=ON -Droofit=ON -DGSL_DIR=/home/surya/products/gsl25/ -DGSL_CONFIG_EXECUTABLE=/home/surya/products/gsl25/bin/gsl-config -DPYTHIA6_LIBRARY=/home/surya/products/pythia6428/libPythia6.so -DPYTHIA8_DIR=/home/surya/products/pythia8235/ -DPYTHIA8_INCLUDE_DIR=/home/surya/products/pythia8235/include/ -DPYTHIA8_LIBRARY=/home/surya/products/pythia8235/lib/libpythia8.so -DCMAKE_INSTALL_PREFIX=/home/surya/products/root-6.14.00/ ../root-6.14.00/
-
+```
 
 CLHEP, GEANT prerequisites:
+```
 sudo apt-get install libxmu-dev libxi-dev libconfig++-dev qt5-default libpq-dev postgresql-12 postgresql-server-dev-all libxerces-c-dev
-
-
+```
 
 Geant4.10.07.p01, CHLEP 2.4.4.0
 
 CMake CLHEP:
+```
 wget https://proj-clhep.web.cern.ch/proj-clhep/dist1/clhep-2.4.4.0.tgz
 tar -zxvf clhep-2.4.4.0.tgz
 rm -rf clhep_v2.4.4.0
@@ -100,9 +77,10 @@ make -j2
 make install
 cd ..
 rm -rf clhep-build
-
+```
 
 CMake Geant4:
+```
 wget https://geant4-data.web.cern.ch/releases/geant4.10.07.p01.tar.gz
 wget https://geant4-data.web.cern.ch/releases/patch_geant4.10.07.p01.tar.gz
 wget https://geant4-data.web.cern.ch/datasets/G4NDL.4.6.tar.gz
@@ -131,12 +109,14 @@ make -j2
 make install
 cd ..
 rm -rf geant4-build
-
+```
 
 GEANT4 Example:
 ### Do this in any directory
+```
 cmake /home/surya/products/GEANT4/geant_v4.10.07.p01/share/Geant4-10.7.1/examples/basic/B1/
 make -j2
+```
 
 ### if GEANT4 environment is not sourced
 ### cmake -DGeant4_DIR=/home/surya/products/GEANT4/geant4.10.04.p02-install/share/Geant4-10.4.2/ /home/surya/products/GEANT4/geant_v4.10.07.p01/share/Geant4-10.7.1/examples/basic/B1/
@@ -168,7 +148,7 @@ svn co https://svnsrv.desy.de/public/unfolding/RooUnfold/trunk RooUnfold
 cd RooUnfold
 make
 
-
+```
 ### ROOT6.22.08
 export ROOTSYS=/home/surya/products/ROOT/root_v6.22.08
 export PATH=$ROOTSYS/bin:$PATH
@@ -185,4 +165,4 @@ export G4INSTALL=/home/surya/products/GEANT4/geant_v4.10.07.p01/share/Geant4-10.
 export G4WORKDIR=./
 source $G4INSTALL/geant4make.sh
 source /home/surya/products/GEANT4/geant_v4.10.07.p01/bin/geant4.sh
-
+```
