@@ -149,8 +149,8 @@ cd RooUnfold
 make
 
 ```
-### ROOT6.22.08
-export ROOTSYS=/home/surya/products/ROOT/root_v6.22.08
+### ROOT6.26.04
+export ROOTSYS=/home/surya/products/ROOT/root_v6.26.04
 export PATH=$ROOTSYS/bin:$PATH
 export LD_LIBRARY_PATH=$ROOTSYS/lib/:$LD_LIBRARY_PATH
 
