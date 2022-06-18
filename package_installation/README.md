@@ -111,13 +111,13 @@ rm -rf geant4-build
 ### GEANT4 Example:
 **Do this in any directory**
 ```
-cmake /home/surya/products/GEANT4/geant_v4.10.07.p01/share/Geant4-10.7.1/examples/basic/B1/
+cmake /home/surya/products/GEANT4/geant_v4.11.00.p02/share/Geant4-11.0.2/examples/basic/B1/
 make -j2
 ```
 
 ### if GEANT4 environment is not sourced
 ```
-cmake -DGeant4_DIR=/home/surya/products/GEANT4/geant4.10.04.p02-install/share/Geant4-10.4.2/ /home/surya/products/GEANT4/geant_v4.10.07.p01/share/Geant4-10.7.1/examples/basic/B1/
+cmake -DGeant4_DIR=/home/surya/products/GEANT4/geant_v4.11.00.p02/share/Geant4-11.0.2/ /home/surya/products/GEANT4/geant_v4.10.07.p01/share/geant_v4.11.00.p02/share/Geant4-11.0.2/basic/B1/
 ```
 
 
