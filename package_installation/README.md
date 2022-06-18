@@ -25,8 +25,8 @@ cd pythia6428/
 ./makePythia6.linuxx8664
 rm *.o
 
-
-Root Dependencies:
+## CERN ROOT:
+Dependencies:
 ```
 sudo apt-get install dpkg-dev cmake g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev python2-dev libssl-dev gfortran libpcre3-dev xlibmesa-glu-dev libglew1.5-dev libftgl-dev libmysqlclient-dev libfftw3-dev libcfitsio-dev graphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python-dev libxml2-dev libkrb5-dev libgsl0-dev qtwebengine5-dev
 ```
@@ -55,7 +55,8 @@ CMake ROOT with other flags:
 cmake -Dgdml=ON -Dbuiltin_gsl=ON -Dmathmore=ON -Dpythia6=ON -Dpythia8=ON -Droofit=ON -DGSL_DIR=/home/surya/products/gsl25/ -DGSL_CONFIG_EXECUTABLE=/home/surya/products/gsl25/bin/gsl-config -DPYTHIA6_LIBRARY=/home/surya/products/pythia6428/libPythia6.so -DPYTHIA8_DIR=/home/surya/products/pythia8235/ -DPYTHIA8_INCLUDE_DIR=/home/surya/products/pythia8235/include/ -DPYTHIA8_LIBRARY=/home/surya/products/pythia8235/lib/libpythia8.so -DCMAKE_INSTALL_PREFIX=/home/surya/products/root-6.14.00/ ../root-6.14.00/
 ```
 
-CLHEP, GEANT prerequisites:
+## CLHEP, GEANT
+Prerequisites:
 ```
 sudo apt-get install libxmu-dev libxi-dev libconfig++-dev qt3d5-dev libpq-dev postgresql-12 postgresql-server-dev-all libxerces-c-dev
 ```
@@ -107,7 +108,7 @@ cd ..
 rm -rf geant4-build
 ```
 
-## GEANT4 Example:
+### GEANT4 Example:
 **Do this in any directory**
 ```
 cmake /home/surya/products/GEANT4/geant_v4.10.07.p01/share/Geant4-10.7.1/examples/basic/B1/
@@ -140,11 +141,14 @@ EVTGEN:
 git clone http://phab.hepforge.org/source/evtgen.git
 ./configure --hepmcdir=/home/surya/products/EVTGEN/external/HepMC --photosdir=/home/surya/products/EVTGEN/external/PHOTOS --pythiadir=/home/surya/products/pythia8235 --tauoladir=/home/surya/products/EVTGEN/external/TAUOLA
 
-RooUnfold:
+## RooUnfold:
+```
 svn co https://svnsrv.desy.de/public/unfolding/RooUnfold/trunk RooUnfold
 cd RooUnfold
 make
+```
 
+## copy these to .bashrc
 ```
 ### ROOT6.26.04
 export ROOTSYS=/home/surya/products/ROOT/root_v6.26.04
