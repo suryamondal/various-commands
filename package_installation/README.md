@@ -58,7 +58,7 @@ cmake -Dgdml=ON -Dbuiltin_gsl=ON -Dmathmore=ON -Dpythia6=ON -Dpythia8=ON -Droofi
 
 CLHEP, GEANT prerequisites:
 ```
-sudo apt-get install libxmu-dev libxi-dev libconfig++-dev qt5-default libpq-dev postgresql-12 postgresql-server-dev-all libxerces-c-dev
+sudo apt-get install libxmu-dev libxi-dev libconfig++-dev qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libpq-dev postgresql-12 postgresql-server-dev-all libxerces-c-dev
 ```
 
 Geant4.10.07.p01, CHLEP 2.4.4.0
