@@ -46,33 +46,32 @@ make install
 cd ..
 rm -rf root_v6.26.04-build
 ```
-### "modules" error: Solved by editing some file: contact jim
-### solved by adding adding "/modules/" before RootMacros.cmake
+***"modules" error: Solved by editing some file: contact jim.
+solved by adding adding "/modules/" before RootMacros.cmake***
 
 
-
-CMake Root6:
+CMake ROOT with other flags:
 ```
 cmake -Dgdml=ON -Dbuiltin_gsl=ON -Dmathmore=ON -Dpythia6=ON -Dpythia8=ON -Droofit=ON -DGSL_DIR=/home/surya/products/gsl25/ -DGSL_CONFIG_EXECUTABLE=/home/surya/products/gsl25/bin/gsl-config -DPYTHIA6_LIBRARY=/home/surya/products/pythia6428/libPythia6.so -DPYTHIA8_DIR=/home/surya/products/pythia8235/ -DPYTHIA8_INCLUDE_DIR=/home/surya/products/pythia8235/include/ -DPYTHIA8_LIBRARY=/home/surya/products/pythia8235/lib/libpythia8.so -DCMAKE_INSTALL_PREFIX=/home/surya/products/root-6.14.00/ ../root-6.14.00/
 ```
 
 CLHEP, GEANT prerequisites:
 ```
-sudo apt-get install libxmu-dev libxi-dev libconfig++-dev qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libpq-dev postgresql-12 postgresql-server-dev-all libxerces-c-dev
+sudo apt-get install libxmu-dev libxi-dev libconfig++-dev qt3d5-dev libpq-dev postgresql-12 postgresql-server-dev-all libxerces-c-dev
 ```
 
-Geant4.10.07.p01, CHLEP 2.4.4.0
+Geant4.11.00.p02, CHLEP 2.4.5.1
 
 CMake CLHEP:
 ```
-wget https://proj-clhep.web.cern.ch/proj-clhep/dist1/clhep-2.4.4.0.tgz
-tar -zxvf clhep-2.4.4.0.tgz
-rm -rf clhep_v2.4.4.0
-mv 2.4.4.0/CLHEP/ clhep_v2.4.4.0
-rm -rf 2.4.4.0
+wget https://proj-clhep.web.cern.ch/proj-clhep/dist1/clhep-2.4.5.1.tgz
+tar -zxvf clhep-2.4.5.1.tgz
+rm -rf clhep_v2.4.5.1
+mv 2.4.5.1/CLHEP/ clhep_v2.4.5.1
+rm -rf 2.4.5.1
 mkdir clhep-build
 cd clhep-build
-cmake -DCMAKE_INSTALL_PREFIX=/home/surya/products/CLHEP/clhep_v2.4.4.0/ /home/surya/products/CLHEP/clhep_v2.4.4.0/
+cmake -DCMAKE_INSTALL_PREFIX=/home/surya/products/CLHEP/clhep_v2.4.5.1/ /home/surya/products/CLHEP/clhep_v2.4.5.1/
 make -j2
 make install
 cd ..
@@ -81,46 +80,44 @@ rm -rf clhep-build
 
 CMake Geant4:
 ```
-wget https://geant4-data.web.cern.ch/releases/geant4.10.07.p01.tar.gz
-wget https://geant4-data.web.cern.ch/releases/patch_geant4.10.07.p01.tar.gz
+wget https://geant4-data.web.cern.ch/releases/geant4-v11.0.2.tar.gz
 wget https://geant4-data.web.cern.ch/datasets/G4NDL.4.6.tar.gz
-wget https://geant4-data.web.cern.ch/datasets/G4EMLOW.7.13.tar.gz
+wget https://geant4-data.web.cern.ch/datasets/G4EMLOW.8.0.tar.gz
 wget https://geant4-data.web.cern.ch/datasets/G4RealSurface.2.2.tar.gz
-wget https://geant4-data.web.cern.ch/datasets/G4TENDL.1.3.2.tar.gz
+wget https://geant4-data.web.cern.ch/datasets/G4TENDL.1.4.tar.gz
 
-mkdir geant4_data
+rm -rf geant4_data
+mkdir -p geant4_data
 cd geant4_data
-tar -zxvf ../G4TENDL.1.3.2.tar.gz 
+tar -zxvf ../G4TENDL.1.4.tar.gz 
 tar -zxvf ../G4NDL.4.6.tar.gz 
-tar -zxvf ../G4EMLOW.7.13.tar.gz 
-tar -zxvf ../G4RealSurface.2.2.tar.gz 
+tar -zxvf ../G4EMLOW.8.0.tar.gz 
+tar -zxvf ../G4RealSurface.2.2.tar.gz
 cd ..
 
-tar -zxvf geant4.10.07.p01.tar.gz
-tar -zxvf patch_geant4.10.07.p01.tar.gz
-cp -rp geant4.10.07/* geant4.10.07.p01/
-rm -rf geant4.10.07
-rm -rf geant_v4.10.07.p01
-mv geant4.10.07.p01 geant_v4.10.07.p01
+tar -zxvf geant4-v11.0.2.tar.gz
+rm -rf geant_v4.11.00.p02
+mv geant4-v11.0.2 geant_v4.11.00.p02
 mkdir geant4-build
 cd geant4-build
-cmake -DCMAKE_INSTALL_PREFIX=/home/surya/products/GEANT4/geant_v4.10.07.p01/ -DGEANT4_USE_SYSTEM_CLHEP=ON -DCLHEP_ROOT_DIR=/home/surya/products/CLHEP/clhep_v2.4.4.0/ -DGEANT4_USE_GDML=ON -DGEANT4_USE_QT=ON -DGEANT4_USE_OPENGL_X11=ON -DGEANT4_USE_RAYTRACER_X11=ON -DGEANT4_INSTALL_DATA=ON -DGEANT4_INSTALL_DATADIR=/home/surya/products/GEANT4/geant4_data/ /home/surya/products/GEANT4/geant_v4.10.07.p01/
+cmake -DCMAKE_INSTALL_PREFIX=/home/surya/products/GEANT4/geant_v4.11.00.p02/ -DGEANT4_USE_SYSTEM_CLHEP=ON -DCLHEP_ROOT_DIR=/home/surya/products/CLHEP/clhep_v2.4.5.1/ -DGEANT4_USE_GDML=ON -DGEANT4_USE_QT=ON -DGEANT4_USE_OPENGL_X11=ON -DGEANT4_USE_RAYTRACER_X11=ON -DGEANT4_INSTALL_DATA=ON -DGEANT4_INSTALL_DATADIR=/home/surya/products/GEANT4/geant4_data/ /home/surya/products/GEANT4/geant_v4.11.00.p02/
 make -j2
 make install
 cd ..
 rm -rf geant4-build
 ```
 
-GEANT4 Example:
-### Do this in any directory
+## GEANT4 Example:
+**Do this in any directory**
 ```
 cmake /home/surya/products/GEANT4/geant_v4.10.07.p01/share/Geant4-10.7.1/examples/basic/B1/
 make -j2
 ```
 
 ### if GEANT4 environment is not sourced
-### cmake -DGeant4_DIR=/home/surya/products/GEANT4/geant4.10.04.p02-install/share/Geant4-10.4.2/ /home/surya/products/GEANT4/geant_v4.10.07.p01/share/Geant4-10.7.1/examples/basic/B1/
-
+```
+cmake -DGeant4_DIR=/home/surya/products/GEANT4/geant4.10.04.p02-install/share/Geant4-10.4.2/ /home/surya/products/GEANT4/geant_v4.10.07.p01/share/Geant4-10.7.1/examples/basic/B1/
+```
 
 
 
@@ -154,15 +151,15 @@ export ROOTSYS=/home/surya/products/ROOT/root_v6.26.04
 export PATH=$ROOTSYS/bin:$PATH
 export LD_LIBRARY_PATH=$ROOTSYS/lib/:$LD_LIBRARY_PATH
 
-### CLHEP-2.4.4.0
-export CLHEP_BASE_DIR=/home/surya/products/CLHEP/clhep_v2.4.4.0/
+### CLHEP-2.4.5.1
+export CLHEP_BASE_DIR=/home/surya/products/CLHEP/clhep_v2.4.5.1/
 export PATH=$PATH:$CLHEP_BASE_DIR/bin
 export LD_LIBRARY_PATH=$CLHEP_BASE_DIR/lib:$LD_LIBRARY_PATH
 
-### GEANT4.10.07.p01
-export G4INSTALL=/home/surya/products/GEANT4/geant_v4.10.07.p01/share/Geant4-10.7.1/geant4make
+### GEANT4.11.00.p02
+export G4INSTALL=/home/surya/products/GEANT4/geant_v4.11.00.p02/share/Geant4-11.0.2/geant4make
 ### export G4WORKDIR=/home/surya/G4WORK
 export G4WORKDIR=./
 source $G4INSTALL/geant4make.sh
-source /home/surya/products/GEANT4/geant_v4.10.07.p01/bin/geant4.sh
+source /home/surya/products/GEANT4/geant_v4.11.00.p02/bin/geant4.sh
 ```
