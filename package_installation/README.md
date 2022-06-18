@@ -87,9 +87,8 @@ wget https://geant4-data.web.cern.ch/datasets/G4EMLOW.8.0.tar.gz
 wget https://geant4-data.web.cern.ch/datasets/G4RealSurface.2.2.tar.gz
 wget https://geant4-data.web.cern.ch/datasets/G4TENDL.1.4.tar.gz
 
-rm -rf geant4_data
-mkdir -p geant4_data
-cd geant4_data
+mkdir -p datasets
+cd datasets
 tar -zxvf ../G4TENDL.1.4.tar.gz 
 tar -zxvf ../G4NDL.4.6.tar.gz 
 tar -zxvf ../G4EMLOW.8.0.tar.gz 
@@ -101,7 +100,7 @@ rm -rf geant_v4.11.00.p02
 mv geant4-v11.0.2 geant_v4.11.00.p02
 mkdir geant4-build
 cd geant4-build
-cmake -DCMAKE_INSTALL_PREFIX=/home/surya/products/GEANT4/geant_v4.11.00.p02/ -DGEANT4_USE_SYSTEM_CLHEP=ON -DCLHEP_ROOT_DIR=/home/surya/products/CLHEP/clhep_v2.4.5.1/ -DGEANT4_USE_GDML=ON -DGEANT4_USE_QT=ON -DGEANT4_USE_OPENGL_X11=ON -DGEANT4_USE_RAYTRACER_X11=ON -DGEANT4_INSTALL_DATA=ON -DGEANT4_INSTALL_DATADIR=/home/surya/products/GEANT4/geant4_data/ /home/surya/products/GEANT4/geant_v4.11.00.p02/
+cmake -DCMAKE_INSTALL_PREFIX=/home/surya/products/GEANT4/geant_v4.11.00.p02/ -DGEANT4_USE_SYSTEM_CLHEP=ON -DCLHEP_ROOT_DIR=/home/surya/products/CLHEP/clhep_v2.4.5.1/ -DGEANT4_USE_GDML=ON -DGEANT4_USE_QT=ON -DGEANT4_USE_OPENGL_X11=ON -DGEANT4_USE_RAYTRACER_X11=ON -DGEANT4_INSTALL_DATA=ON -DGEANT4_INSTALL_DATADIR=/home/surya/products/GEANT4/datasets/ /home/surya/products/GEANT4/geant_v4.11.00.p02/
 make -j2
 make install
 cd ..
