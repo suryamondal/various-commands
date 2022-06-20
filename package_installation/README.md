@@ -46,8 +46,12 @@ make install
 cd ..
 rm -rf root_v6.26.04-build
 ```
-***"modules" error: Solved by editing some file: contact jim.
-solved by adding adding "/modules/" before RootMacros.cmake***
+### CMake Error at ../cmake/filename.cmake:4 (include): include could not find requested file
+Solved by [Jim](https://github.com/jimmjohn). Solution is editing the following files to add `modules/` before `RootMacros.cmake`.
+```
+cmake/ROOTConfig.cmake
+cmake/ROOTUseFile.cmake
+```
 
 
 CMake ROOT with other flags:
