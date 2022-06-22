@@ -86,6 +86,11 @@ Copy files from all subdirectories:
 find . -type f -print0 | xargs -0 mv -t ../../20170804/output/geantOut/
 ```
 
+### Replace whitespace with newline
+```
+cat example | xargs -n 1
+```
+
 Finding Missing File:
 
 PDFTK:
