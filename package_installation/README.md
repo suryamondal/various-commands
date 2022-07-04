@@ -169,4 +169,8 @@ export G4INSTALL=/home/surya/products/GEANT4/geant_v4.11.00.p02/share/Geant4-11.
 export G4WORKDIR=./
 source $G4INSTALL/geant4make.sh
 source /home/surya/products/GEANT4/geant_v4.11.00.p02/bin/geant4.sh
+
+# RooUnfold
+export ROOUNFOLD=/home/surya/products/RooUnfold/
+export LD_LIBRARY_PATH=$ROOUNFOLD:$LD_LIBRARY_PATH
 ```
