@@ -30,11 +30,13 @@ git: lost and found
 git fsck --cache --no-reflogs --lost-found --dangling HEAD
 ```
 
-Compress PDF Document:
+Compress PDF Document: Two ways
 ```
 gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dBATCH -dQUIET -sOutputFile=output.pdf input.pdf
 ```
 **/screen /ebook /printer /prepress /default**
+
+Otherwise, use this custom made [script](https://github.com/suryamondal/various_commands/blob/main/various_linux_commands/compresspdf.sh) by me.
 
 convert: PDF to JPEG
 ```
