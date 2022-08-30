@@ -4,6 +4,9 @@
 # Arg 1: jpeg dpi
 # Arg 2: fileName
 
+# chmod +x compresspdf.sh
+# usage: ./compresspdf.sh 150 test.pdf
+
 filename=$2
 
 number=`pdftk LayerCompare.pdf dump_data | grep NumberOfPages | sed 's/[^0-9]*//'`
