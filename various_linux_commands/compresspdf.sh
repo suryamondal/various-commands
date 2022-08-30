@@ -7,6 +7,10 @@
 # chmod +x compresspdf.sh
 # usage: ./compresspdf.sh 150 test.pdf
 
+# If encounter  PDF error, then
+# comment out the following line in /etc/ImageMagick-6/policy.xml
+#   <policy domain="coder" rights="none" pattern="PDF" />
+
 filename=$2
 
 number=`pdftk LayerCompare.pdf dump_data | grep NumberOfPages | sed 's/[^0-9]*//'`
