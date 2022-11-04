@@ -44,7 +44,9 @@ convert -verbose -density 300 -trim test.pdf -quality 100 test.jpg
 ```
 
 ### Join two consecutive A5 pages into A4. (All are in potrait mode.)
+```
 pdf2ps -dLanguageLevel=3 A5.pdf - | psnup -2 -Pa5 -pa4 | ps2pdf -dCompatibility=1.4 - A4.pdf
+```
 
 ### For time lapse:
 ```
