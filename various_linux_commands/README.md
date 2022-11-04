@@ -50,7 +50,7 @@ mutool poster -y 2 A4.pdf A5.pdf
 
 ### Join two consecutive A5 pages into A4. (All are in potrait mode.)
 ```
-pdf2ps -dLanguageLevel=3 A5.pdf - | psnup -2 -Pa5 -pa4 | ps2pdf -dCompatibility=1.4 - A4.pdf
+pdf2ps -dLanguageLevel=3 A5.pdf - | psnup -2 -r -Pa5 -Pa4 | ps2pdf -dCompatibility=1.4 - A4.pdf
 ```
 
 ### For time lapse:
