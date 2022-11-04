@@ -43,6 +43,11 @@ Otherwise, use this custom made [script](https://github.com/suryamondal/various_
 convert -verbose -density 300 -trim test.pdf -quality 100 test.jpg
 ```
 
+### Split one A4 into two A5
+```
+mutool poster -y 2 A4.pdf A5.pdf
+```
+
 ### Join two consecutive A5 pages into A4. (All are in potrait mode.)
 ```
 pdf2ps -dLanguageLevel=3 A5.pdf - | psnup -2 -Pa5 -pa4 | ps2pdf -dCompatibility=1.4 - A4.pdf
