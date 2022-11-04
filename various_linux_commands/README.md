@@ -1,6 +1,6 @@
-## Various useful tricks and commands in linux
+# Various useful tricks and commands in linux
 
-stopping computer to go into sleep mode:
+### stopping computer to go into sleep mode:
 ```
 sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 ```
@@ -20,17 +20,17 @@ rsync -au src/* suryanarayan@sim01.ino.tifr.res.in:/home/suryanarayan/Documents/
 rsync -au include/* suryanarayan@sim01.ino.tifr.res.in:/home/suryanarayan/Documents/Gobinda/IICHEP/RPCStackSim20180516_rpcDaq/include/
 ```
 
-copy from ftp:
+### copy from ftp:
 ```
 wget -c --user=android --ask-password ftp://192.168.1.135:2221/Camera/IMG_20190824*
 ```
 
-git: lost and found
+### git: lost and found
 ```
 git fsck --cache --no-reflogs --lost-found --dangling HEAD
 ```
 
-Compress PDF Document: Two ways
+### Compress PDF Document: Two ways
 ```
 gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dBATCH -dQUIET -sOutputFile=output.pdf input.pdf
 ```
@@ -38,12 +38,15 @@ gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dB
 
 Otherwise, use this custom made [script](https://github.com/suryamondal/various_commands/blob/main/various_linux_commands/compresspdf.sh) by me.
 
-convert: PDF to JPEG
+### convert: PDF to JPEG
 ```
 convert -verbose -density 300 -trim test.pdf -quality 100 test.jpg
 ```
 
-For time lapse:
+### Join two consecutive A5 pages into A4. (All are in potrait mode.)
+pdf2ps -dLanguageLevel=3 A5.pdf - | psnup -2 -Pa5 -pa4 | ps2pdf -dCompatibility=1.4 - A4.pdf
+
+### For time lapse:
 ```
 ffmpeg -f image2 -r 30 -i %*.JPG -s hd720 -vcodec libx264 ../out.mp4
 ```
