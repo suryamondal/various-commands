@@ -20,6 +20,9 @@ rsync -au src/* suryanarayan@sim01.ino.tifr.res.in:/home/suryanarayan/Documents/
 rsync -au include/* suryanarayan@sim01.ino.tifr.res.in:/home/suryanarayan/Documents/Gobinda/IICHEP/RPCStackSim20180516_rpcDaq/include/
 ```
 
+### Find file recursively
+find . -type f -name "*_reco.root"
+
 ### Convert equation to C++
 Copy the code to `Emacs`. With the cursor in the formula, activate calc-embedded mode
 ```
