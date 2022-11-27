@@ -7,21 +7,15 @@ sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.ta
 
 https://hushup.app/rmaji
 
-Specials:
+### Some Specials (forgot why I wrote these):
 ```
 find . -type f | grep root | grep sim01 | xargs -I {} mv {} .
 ```
-```
-rsync -au --progress suryanarayan@158.144.55.146:/home/suryanarayan/Documents/Gobinda .
-
-rsync -au suryanarayan@sim01.ino.tifr.res.in:/home/suryanarayan/Documents/Gobinda/IICHEP/RPCStackSim20180516_rpcDaq/temp/*root /media/surya/Surya_1/DaqMadurai/maduraiCorsikaData/20170804/geantOutput/
-
-rsync -au src/* suryanarayan@sim01.ino.tifr.res.in:/home/suryanarayan/Documents/Gobinda/IICHEP/RPCStackSim20180516_rpcDaq/src/
-rsync -au include/* suryanarayan@sim01.ino.tifr.res.in:/home/suryanarayan/Documents/Gobinda/IICHEP/RPCStackSim20180516_rpcDaq/include/
-```
 
 ### Find file recursively
+```
 find . -type f -name "*_reco.root"
+```
 
 ### Convert equation to C++
 Copy the code to `Emacs`. With the cursor in the formula, activate calc-embedded mode
