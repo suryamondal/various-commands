@@ -27,8 +27,14 @@ rm *.o
 
 ## CERN ROOT:
 Dependencies:
+
+For Debian:
 ```
-sudo apt-get install dpkg-dev cmake g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev python2-dev libssl-dev gfortran libpcre3-dev xlibmesa-glu-dev libglew1.5-dev libftgl-dev libmysqlclient-dev libfftw3-dev libcfitsio-dev graphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python-dev libxml2-dev libkrb5-dev libgsl0-dev qtwebengine5-dev
+sudo apt-get install dpkg-dev cmake g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev python libssl-dev gfortran libpcre3-dev xlibmesa-glu-dev libglew-dev libftgl-dev libmysqlclient-dev libfftw3-dev libcfitsio-dev graphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python-dev python-numpy libxml2-dev libkrb5-dev libgsl0-dev qtwebengine5-dev
+```
+For Gentoo:
+```
+emerge --ask dpkg cmake gcc binutils libX11 libXpm libXft libXext python dev-libs/openssl fortran libpcre net-libs/libgssglue net-libs/libnftnl dev-python/mysqlclient sci-libs/fftw sci-libs/cfitsio media-gfx/graphviz media-libs/libva-compat sci-libs/libdap libxml2 dev-python/krb5 net-libs/libgsasl dev-qt/qtwebengine x11-libs/libGLw dev-python/numpy
 ```
 
 CMake Root6.26.04: Less flags : worked
