@@ -118,3 +118,8 @@ pdftk full-pdf.pdf cat 12-15 output outfile_p12-15.pdf
 ```
 
 https://pacoup.com/2011/06/12/list-of-true-169-resolutions/
+
+### Random string generator
+```
+openssl rand -base64 12
+```
