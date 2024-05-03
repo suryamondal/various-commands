@@ -119,7 +119,8 @@ pdftk full-pdf.pdf cat 12-15 output outfile_p12-15.pdf
 
 https://pacoup.com/2011/06/12/list-of-true-169-resolutions/
 
-### Random string generator
+### Random string / password generator
 ```
 openssl rand -base64 12
+for n in 0 1 2 3 4 5; do echo $n && openssl rand -base64 12; done
 ```
