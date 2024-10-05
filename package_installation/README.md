@@ -37,6 +37,12 @@ For Gentoo:
 emerge --ask dpkg cmake gcc binutils libX11 libXpm libXft libXext python dev-libs/openssl fortran libpcre net-libs/libgssglue net-libs/libnftnl dev-python/mysqlclient sci-libs/fftw sci-libs/cfitsio media-gfx/graphviz media-libs/libva-compat sci-libs/libdap libxml2 dev-python/krb5 net-libs/libgsasl dev-qt/qtwebengine x11-libs/libGLw dev-python/numpy
 ```
 
+For conda environemt:
+```BASH
+conda install -c conda-forge cmake gxx_linux-64 gcc_linux-64 binutils libxml2 gfortran pcre fftw cfitsio graphviz avahi fftw gsl qt glew mysqlclient numpy krb5
+sudo apt-get install libx11-dev libxpm-dev libxft-dev libxext-dev libssl-dev libldap2-dev
+```
+
 CMake Root6.26.04: Less flags : worked
 ```
 wget https://root.cern/download/root_v6.26.04.source.tar.gz
