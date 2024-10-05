@@ -39,7 +39,7 @@ emerge --ask dpkg cmake gcc binutils libX11 libXpm libXft libXext python dev-lib
 
 For conda environemt:
 ```BASH
-conda install -c conda-forge cmake gxx_linux-64 gcc_linux-64 binutils libxml2 gfortran pcre fftw cfitsio graphviz avahi fftw gsl qt glew mysqlclient numpy krb5
+conda install -c conda-forge cmake gxx_linux-64 gcc_linux-64 binutils libxml2 gfortran pcre fftw cfitsio graphviz avahi fftw gsl qt glew mysqlclient numpy krb5 xorg-libx11 xorg-libxpm xorg-libxft
 sudo apt-get install libx11-dev libxpm-dev libxft-dev libxext-dev libssl-dev libldap2-dev
 ```
 
