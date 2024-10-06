@@ -41,6 +41,7 @@ For conda environemt:
 ```BASH
 conda install -c conda-forge cmake gxx_linux-64 gcc_linux-64 binutils libxml2 gfortran pcre fftw cfitsio graphviz avahi fftw gsl qt glew mysqlclient numpy krb5 xorg-libx11 xorg-libxpm xorg-libxft
 sudo apt-get install libx11-dev libxpm-dev libxft-dev libxext-dev libssl-dev libldap2-dev
+conda install -c conda-forge tbb
 ```
 
 CMake Root6.26.04: Less flags : worked
