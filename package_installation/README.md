@@ -170,6 +170,7 @@ make
 export ROOTSYS=/home/surya/products/ROOT/root_v6.26.04
 export PATH=$ROOTSYS/bin:$PATH
 export LD_LIBRARY_PATH=$ROOTSYS/lib/:$LD_LIBRARY_PATH
+export PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH
 
 ### CLHEP-2.4.5.1
 export CLHEP_BASE_DIR=/home/surya/products/CLHEP/clhep_v2.4.5.1/
