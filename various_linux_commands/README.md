@@ -37,12 +37,14 @@ wget -c --user=android --ask-password ftp://192.168.1.135:2221/Camera/IMG_201908
 git fsck --cache --no-reflogs --lost-found --dangling HEAD
 ```
 
-### Compress PDF Document: Two ways
+### Compress PDF Document: Three ways
 ```
 gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dBATCH -dQUIET -sOutputFile=output.pdf input.pdf
 ```
 **/screen /ebook /printer /prepress /default**
-
+```
+gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -r120 -dDownsampleColorImages=true -dColorImageResolution=120 -dDownsampleGrayImages=true -dGrayImageResolution=120 -dDownsampleMonoImages=true -dMonoImageResolution=300 -dJPEGQ=85 -dNOPAUSE -dBATCH -sOutputFile=bsc.pdf bsc1.pdf
+```
 Otherwise, use this custom made [script](https://github.com/suryamondal/various_commands/blob/main/various_linux_commands/compresspdf.sh) by me.
 
 ### convert: PDF to JPEG
