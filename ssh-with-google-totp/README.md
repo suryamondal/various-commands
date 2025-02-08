@@ -1,3 +1,5 @@
+## SSH with F2A
+
 Edit the following file `/etc/ssh/sshd_config.d/00-hardening.conf`. This file is included in `/etc/ssh/sshd_config`.
 ```BASH
 # Use only SSH Protocol 2
@@ -37,7 +39,7 @@ auth required pam_google_authenticator.so
 ```
 Make sure to comment out `common-auth` mentioned anywhere, otherwise it will ask for password again.
 
-Create a file `/usr/local/bin/check_ssh_auth.sh` with the following content.
+Create a file `/usr/local/bin/check_ssh_auth.sh` with the following content and make it executable.
 ```BASH
 #!/bin/bash
 
