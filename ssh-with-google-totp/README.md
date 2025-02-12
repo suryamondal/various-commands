@@ -1,4 +1,4 @@
-## SSH with F2A
+# SSH with F2A
 
 Edit the following file `/etc/ssh/sshd_config.d/00-hardening.conf`. This file is included in `/etc/ssh/sshd_config`.
 ```BASH
