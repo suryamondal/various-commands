@@ -1,6 +1,6 @@
 # SSH with F2A
 
-Edit the following file `/etc/ssh/sshd_config.d/00-hardening.conf`. This file is included in `/etc/ssh/sshd_config`.
+Edit the following file `/etc/ssh/sshd_config.d/00-hardening.conf`.
 ```BASH
 # Use only SSH Protocol 2
 Protocol 2
@@ -25,6 +25,11 @@ AllowUsers mondal ehep24
 
 # Logging
 LogLevel VERBOSE
+```
+
+Above file is file is included in `/etc/ssh/sshd_config`. Check if the following command already exists in it.
+```BASH
+Include /etc/ssh/sshd_config.d/*.conf
 ```
 
 Include the following in the `/etc/pam.d/sshd` file.
@@ -60,7 +65,7 @@ sudo apt install libpam-google-authenticator
 google-authenticator
 ```
 
-Update time.
+Update time. If any error messege then stop other time-keepers.
 ```BASH
 sudo ntpdate ntp.tifr.res.in
 ```
