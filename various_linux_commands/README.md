@@ -62,6 +62,11 @@ mutool poster -y 2 A4.pdf A5.pdf
 pdf2ps -dLanguageLevel=3 A5.pdf - | psnup -2 -r -Pa5 -pa4 | ps2pdf -dCompatibility=1.4 - A4.pdf
 ```
 
+### Convert all xournal++ files into pdf in a directory
+```BASH
+for file in *.xopp; do xournalpp --create-pdf="${file%.xopp}.pdf" "$file"; done
+```
+
 ### For time lapse:
 ```
 ffmpeg -f image2 -r 30 -i %*.JPG -s hd720 -vcodec libx264 ../out.mp4
