@@ -131,3 +131,8 @@ https://pacoup.com/2011/06/12/list-of-true-169-resolutions/
 openssl rand -base64 12
 for n in 0 1 2 3 4 5; do echo $n && openssl rand -base64 12; done
 ```
+
+### Scan using Canon Lide 100
+```BASH
+scanimage --mode Color --resolution 300 -p --format=pdf --brightness 25 --contrast 25 -x 148 -y 210 > output002.pdf
+```
