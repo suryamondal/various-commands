@@ -62,6 +62,11 @@ mutool poster -y 2 A4.pdf A5.pdf
 pdf2ps -dLanguageLevel=3 A5.pdf - | psnup -2 -r -Pa5 -pa4 | ps2pdf -dCompatibility=1.4 - A4.pdf
 ```
 
+### Join two PDFs with size 105x297 into one PDF
+```bash
+pdfjam --nup 2x1 --papersize '{210mm,297mm}' left.pdf right.pdf --outfile A4.pdf
+```
+
 ### Convert all xournal++ files into pdf in a directory
 ```BASH
 for file in *.xopp; do xournalpp --create-pdf="${file%.xopp}.pdf" "$file"; done
