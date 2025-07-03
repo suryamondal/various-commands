@@ -188,3 +188,11 @@ source /home/surya/products/GEANT4/geant_v4.11.00.p02/bin/geant4.sh
 export ROOUNFOLD=/home/surya/products/RooUnfold/
 export LD_LIBRARY_PATH=$ROOUNFOLD:$LD_LIBRARY_PATH
 ```
+
+## Emacs common configuration
+### put this in `.emacs.d/init.el`
+```BASH
+(column-number-mode 1)
+(setq ispell-dictionary "british")
+(add-hook 'find-file-hook (lambda () (read-only-mode 1)))
+```
