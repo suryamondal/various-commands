@@ -146,3 +146,9 @@ Restart `sshd` using the following.
 ```BASH
 sudo systemctl restart ssh && sudo systemctl restart sshd
 ```
+
+## Clear Fail2ban
+```BASH
+sudo fail2ban-client status sshd
+sudo fail2ban-client set sshd unbanip <target-ip>
+```
