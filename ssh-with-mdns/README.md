@@ -1,4 +1,4 @@
-# mDNS for Ubuntu Mate
+# mDNS for Ubuntu MATE
 
 ```BASH
 sudo apt update
