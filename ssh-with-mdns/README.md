@@ -13,6 +13,7 @@ Put the following in `/etc/avahi/avahi-daemon.conf`
 ```BASH
 [server]
 host-name=youreachedthinkcentre
+domain-name=local
 ```
 Then restart `avahi-daemon`
 ```BASH
