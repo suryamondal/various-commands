@@ -45,7 +45,7 @@ Give the `path/to/file` as `/home/username/.ssh/id_rsa_remote1`. **Give the full
 
 Now, copy the `public` key to the `remote1` using the following command.
 ```
-ssh-copy-id -i ~/.ssh/id_rsa_remote1 remote1
+ssh-copy-id  -o PubkeyAuthentication=no -o PreferredAuthentications=password -i ~/.ssh/id_rsa_remote1 remote1
 ```
 It may ask user password multiple times, don't worry.
 
