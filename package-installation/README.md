@@ -189,10 +189,18 @@ export ROOUNFOLD=/home/surya/products/RooUnfold/
 export LD_LIBRARY_PATH=$ROOUNFOLD:$LD_LIBRARY_PATH
 ```
 
+## change terminal initiation string
+```BASH
+    PS1="[\!]Surya[\W] "
+```
+
 ## Emacs common configuration
-### put this in `.emacs.d/init.el`
+### put this in `.emacs` or `.emacs.d/init.el`
 ```BASH
 (column-number-mode 1)
 (setq ispell-dictionary "british")
 (add-hook 'find-file-hook (lambda () (read-only-mode 1)))
+
+;; Open .ino files in c++-mode automatically
+(add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode))
 ```
