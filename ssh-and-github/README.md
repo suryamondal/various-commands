@@ -23,10 +23,16 @@ ServerAliveInterval 60
 
 The following piece of code goes in the `~/.ssh/config` file.
 ```
+# mkdir -p ~/.ssh/log
+# chmod 700 ~/.ssh/log
+
 Host remote1
-     User myusername
-     Hostname host.public.ip.or.url
-     IdentityFile ~/.ssh/id_rsa_remote1
+    User myusername
+    Hostname host.public.ip.or.url
+    IdentityFile ~/.ssh/id_rsa_remote1
+    ControlMaster auto
+    ControlPath ~/.ssh/log/cm-%r@%h:%p
+    ControlPersist 0
 ```
 
 The point of all of this is that one can just `ssh remote1`, instead of `ssh myusername@host.public.ip.or.url`.
