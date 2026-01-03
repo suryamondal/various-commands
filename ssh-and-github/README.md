@@ -43,7 +43,7 @@ In simple, a pair of `public` and `private` keys are created. The `public` key i
 
 Execute the following in a terminal to generate the key,
 ```
-ssh-keygen -C "my_laptop"
+ssh-keygen -t rsa -b 4096 -C "my_laptop"
 ```
 Give the `path/to/file` as `/home/username/.ssh/id_rsa_remote1`. **Give the full name. It does not resolve `~`.**
 
