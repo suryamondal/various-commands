@@ -442,21 +442,16 @@ c4d2f1e HEAD@{2}: commit: initial
             \vspace{0.4em}
             \uncover<3->{
             \begin{block}{Basic commands}
-                \texttt{git branch myidea} \quad create\\[4pt]
-                \texttt{git checkout myidea} \quad switch to it\\[4pt]
-                \texttt{git checkout main} \quad go back\\[4pt]
-                \texttt{git branch -d myidea} \quad delete
+                \begin{tabular}{l@{\quad$\triangleright$\quad}l}
+                    \texttt{git branch myidea}    & create       \\[4pt]
+                    \texttt{git checkout myidea}  & switch to it \\[4pt]
+                    \texttt{git checkout main}    & go back      \\[4pt]
+                    \texttt{git branch -d myidea} & delete       \\[4pt]
+                    \texttt{git merge main}       & merge branches
+                \end{tabular}
             \end{block}
             }
-            \vspace{0.4em}
-            \uncover<4->{
-            \begin{tcolorbox}[colback=red!10, colframe=red, boxrule=1pt,
-                              arc=2pt, boxsep=4pt]
-                \centering\textit{Experiment freely. If it fails,\\
-                delete the branch. Nothing is lost.}
-            \end{tcolorbox}
-            }
-        \column{0.45\textwidth}
+        \column{0.4\textwidth}
             \begin{lstlisting}[language=bash]
 # create and switch to a new branch
 git branch myidea
@@ -519,7 +514,7 @@ $ git log --oneline --graph --all
     \centering
     \vspace{0.8em}
     \large
-    \texttt{init} \quad \texttt{add} \quad \texttt{commit} \quad \texttt{status} \quad \texttt{diff} \quad \texttt{log} \quad \texttt{reflog} \quad \texttt{reset} \quad \texttt{branch}\\[1.2em]
+    \texttt{init} \quad \texttt{add} \quad \texttt{commit} \quad \texttt{status} \quad \texttt{diff} \quad \texttt{log} \quad \texttt{reflog} \quad \texttt{reset} \quad \texttt{branch} \quad \texttt{merge}\\[1.2em]
     \normalsize
     \pause
     \textbf{None of these touch the network.}\\[0.4em]
@@ -569,21 +564,25 @@ $ git log --oneline --graph --all
 \begin{frame}[fragile]{Connecting to a hub}
     \begin{columns}
         \column{0.52\textwidth}
-            Before pushing, your local repository\\
-            needs to know where the remote is.\\[0.6em]
-            \begin{lstlisting}[language=bash]
-git remote add origin \
-  git@github.com:you/myproject.git
-            \end{lstlisting}
+            \uncover<1->{
+            \begin{block}{Local repo exists}
+                Tell git where the remote is --- done \textbf{once}.\\[4pt]
+                \texttt{git remote add origin}\\
+                \texttt{\quad git@github.com:you/myproject.git}\\[4pt]
+                \texttt{origin} is just a name --- an alias.\\
+                You can have multiple remotes.
+            \end{block}}
             \vspace{0.4em}
-            \pause
-            \begin{itemize}
-                \item \texttt{origin} is just a name --- an alias
-                \item You can have multiple remotes
-                \item Done \textbf{once} per repository
-            \end{itemize}
+            \uncover<2->{
+            \begin{block}{No local repo yet}
+                \texttt{git clone} creates the directory,\\
+                initialises git, and connects the remote\\
+                --- all in one step.\\[4pt]
+                \texttt{git clone}\\
+                \texttt{\quad git@github.com:you/myproject.git}
+            \end{block}}
         \column{0.44\textwidth}
-            \pause
+            \uncover<3->{
             \begin{block}{Directory vs Repository}
                 A \textbf{directory} is any folder\\
                 on your filesystem.\\[6pt]
@@ -591,7 +590,7 @@ git remote add origin \
                 that git is tracking --- it has\\
                 a \texttt{.git/} folder inside.\\[6pt]
                 From the outside, they look identical.
-            \end{block}
+            \end{block}}
     \end{columns}
 \end{frame}
 
