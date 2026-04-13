@@ -8,10 +8,6 @@
   %\setbeamertemplate{navigation symbols}{}
 }
 
-% ── encoding (keeps listings UTF-8 clean) ──────────────────────────────────────
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
-
 % ── graphics ───────────────────────────────────────────────────────────────────
 \usepackage{graphicx}
 \usepackage{graphics}
@@ -46,14 +42,9 @@
 \usepackage{listings}
 \usepackage{xcolor}
 
-\definecolor{codebg}{RGB}{248,248,248}
-\definecolor{codeframe}{RGB}{210,210,210}
-
 \lstset{
-    backgroundcolor=\color{codebg},
     basicstyle=\ttfamily\footnotesize,
     frame=single,
-    rulecolor=\color{codeframe},
     breaklines=true,
     showstringspaces=false,
 }
@@ -68,10 +59,14 @@
 \usepackage{appendixnumberbeamer}
 
 % ── title info ─────────────────────────────────────────────────────────────────
-\title{Git Works for You}
-\subtitle{A case for pushing every day}
-\author{Suryanarayan Mondal}
-\institute{}
+\title[Git --- Works for You]{Git Works for You \\
+  \small{\textcolor{blue}{A Case for Pushing Every Day} \\
+  \tiny{\textcolor{olive}{Because your laptop will not last forever}}}}
+%% \subtitle{}
+\author[Mondal]{Suryanarayan Mondal}
+\institute[\href{mailto:suryamondal@gmail.com}{suryamondal@gmail.com}] {
+  %% \small{Your Institute}
+}
 \date{}
 
 % ══════════════════════════════════════════════════════════════════════════════
