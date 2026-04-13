@@ -598,16 +598,16 @@ $ git log --oneline --graph --all
 
 \begin{frame}[fragile]{Sending and receiving}
     \begin{columns}
-        \column{0.48\textwidth}
+        \column{0.52\textwidth}
             \begin{block}{\texttt{git push} $\triangleright$}
                 Send your local commits to the remote.\\[4pt]
                 \begin{lstlisting}[language=bash]
-git push
+git push --set-upstream origin <branch>
                 \end{lstlisting}
-                \textit{Your work is now backed up.\\
+\textit{Your work is now backed up.\\
                 Timestamped. Publicly yours.}
             \end{block}
-        \column{0.48\textwidth}
+        \column{0.44\textwidth}
             \pause
             \begin{block}{\texttt{git pull} $\triangleright$}
                 Get the latest commits from the remote.\\[4pt]
@@ -633,57 +633,73 @@ git pull
 
 % ─────────────────────────────────────────────────────────────────────────────
 
-\begin{frame}{Why push every day?}
+\begin{frame}[fragile]{Good practices --- starting a task}
     \begin{columns}
-        \column{0.5\textwidth}
-            \begin{alertblock}{Local commits die with your laptop}
-                A commit saved only locally disappears if:
-                \begin{itemize}
-                    \item Hard drive fails
-                    \item Laptop is stolen
-                    \item Accidental \texttt{rm -rf}
-                \end{itemize}
-            \end{alertblock}
-        \column{0.5\textwidth}
-            \pause
-            \begin{block}{A push is different $\triangleright$}
-                \begin{itemize}
-                    \item Your work lives on a server
-                    \item Timestamped --- publicly
-                    \item \textbf{Nobody can dispute\\who wrote it first}
-                    \item One push costs less data\\than sending one email
-                \end{itemize}
-            \end{block}
+        \column{0.44\textwidth}
+            \uncover<1->{\begin{block}{On GitHub $\triangleright$}
+                Open an \textbf{issue} describing the task.\\[4pt]
+                Create branch \textbf{directly from the issue}.\\[4pt]
+                GitHub names it and links it\\
+                to the issue automatically.
+            \end{block}}
+            \vspace{0.4em}
+            \uncover<2->{\begin{block}{In the terminal $\triangleright$}
+                Pull main to get the new branch,\\
+                then switch to it.
+            \end{block}}
+            \vspace{0.4em}
+            \uncover<3->{\begin{block}{Work on your branch $\triangleright$}
+                Edit, add, commit as usual.\\
+                The branch is yours --- experiment freely.
+            \end{block}}
+        \column{0.52\textwidth}
+            \begin{lstlisting}[language=bash]
+# get latest main + new remote branch
+git checkout main
+git pull
+
+# switch to the branch GitHub created
+git checkout feature/42-new-analysis
+
+# work, then save
+git add analysis.py
+git commit -m "add new analysis"
+            \end{lstlisting}
     \end{columns}
-    \vspace{1em}
-    \pause
-    \centering
-    \textbf{Push once or twice a day.\\
-    No bandwidth concern. No data concern.\\
-    There is only upside.}
 \end{frame}
 
 % ─────────────────────────────────────────────────────────────────────────────
 
-\begin{frame}[fragile]{The daily habit}
-    \centering
-    \begin{block}{Morning --- get what changed $\triangleright$}
-        \begin{lstlisting}[language=bash]
-git pull
-        \end{lstlisting}
-    \end{block}
-    \vspace{0.6em}
-    \begin{block}{Evening --- save your day $\triangleright$}
-        \begin{lstlisting}[language=bash]
-git add -u
-git commit -m "what I did today"
+\begin{frame}[fragile]{Good practices --- finishing a task}
+    \begin{columns}
+        \column{0.44\textwidth}
+            \uncover<1->{\begin{block}{Push $\triangleright$}
+                Branch already exists on remote ---\\
+                upstream is set. Just push.
+            \end{block}}
+            \vspace{0.4em}
+            \uncover<2->{\begin{block}{On GitHub $\triangleright$}
+                Open a \textbf{merge/pull request}.\\[4pt]
+                Add reviewers. Discuss.\\
+                Fix, commit, push again if needed.\\[4pt]
+                Once approved --- \textbf{merge into main}.
+            \end{block}}
+            \vspace{0.4em}
+            \uncover<3->{\begin{block}{Start the next task $\triangleright$}
+                Back to main, pull, repeat.
+            \end{block}}
+        \column{0.52\textwidth}
+            \begin{lstlisting}[language=bash]
+# push your commits
 git push
-        \end{lstlisting}
-    \end{block}
-    \vspace{0.8em}
-    \pause
-    \textbf{Three commands. \; Thirty seconds. \; Every day.}\\[6pt]
-    \small Your laptop can burn tonight. \; Your work is safe.
+
+# after merge: back to main
+git checkout main
+git pull
+
+# ready for the next task
+            \end{lstlisting}
+    \end{columns}
 \end{frame}
 
 % ─────────────────────────────────────────────────────────────────────────────
