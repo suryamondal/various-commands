@@ -92,7 +92,7 @@ analysis_final_REAL_submitted_2.py
             \end{lstlisting}
         \column{0.5\textwidth}
             \pause
-            \begin{block}{The hard questions}
+            \begin{block}{The hard questions $\triangleright$}
                 \begin{itemize}
                     \item Which one did I submit?
                     \item What changed between v2 and final?
@@ -113,7 +113,7 @@ analysis_final_REAL_submitted_2.py
 \begin{frame}{You invented version control (without knowing it)}
     \begin{columns}
         \column{0.48\textwidth}
-            \begin{block}{What you do manually}
+            \begin{block}{What you do manually $\triangleright$}
                 \begin{tabular}{ll}
                     \texttt{\_v1}, \texttt{\_v2}      & $\leftarrow$ version tag    \\[4pt]
                     \texttt{\_fixed}                   & $\leftarrow$ commit message \\[4pt]
@@ -123,7 +123,7 @@ analysis_final_REAL_submitted_2.py
             \end{block}
         \column{0.48\textwidth}
             \pause
-            \begin{block}{What git does automatically}
+            \begin{block}{What git does automatically $\triangleright$}
                 \begin{tabular}{ll}
                     version number     & assigned           \\[4pt]
                     commit message     & you write it once  \\[4pt]
@@ -202,7 +202,7 @@ my_project/
 \begin{frame}{Two different things. One name.}
     \begin{columns}
         \column{0.48\textwidth}
-            \begin{block}{\texttt{git} --- the tool}
+            \begin{block}{\texttt{git} --- the tool $\triangleright$}
                 \begin{itemize}
                     \item Runs on your computer
                     \item Works offline
@@ -212,7 +212,7 @@ my_project/
                 \end{itemize}
             \end{block}
         \column{0.48\textwidth}
-            \begin{block}{GitHub --- the website}
+            \begin{block}{GitHub --- the website $\triangleright$}
                 \begin{itemize}
                     \item A website in the cloud
                     \item Stores a \textit{copy} of your repo
@@ -276,7 +276,7 @@ my_project/
     \begin{columns}
         \column{0.44\textwidth}
             \uncover<2->{
-            \begin{block}{Three zones}
+            \begin{block}{Three zones $\triangleright$}
                 \begin{itemize}
                     \item \textbf{Staged} --- ready to commit
                     \item \textbf{Modified} --- changed, not staged yet
@@ -286,7 +286,7 @@ my_project/
             }
             \vspace{0.4em}
             \uncover<3->{
-            \begin{block}{Moving between zones}
+            \begin{block}{Moving between zones $\triangleright$}
                 Stage a file:\\
                 \texttt{git add README.md}\\[4pt]
                 Changed your mind? Unstage it:\\
@@ -323,7 +323,7 @@ Untracked files:
     \begin{columns}
         \column{0.44\textwidth}
             \uncover<2->{
-            \begin{block}{Reading the output}
+            \begin{block}{Reading the output $\triangleright$}
                 \begin{itemize}
                     \item Lines with \texttt{-} were removed
                     \item Lines with \texttt{+} were added
@@ -333,7 +333,7 @@ Untracked files:
             }
             \vspace{0.4em}
             \uncover<3->{
-            \begin{block}{Useful variants}
+            \begin{block}{Useful variants $\triangleright$}
                 \texttt{git diff} \quad since last commit\\[4pt]
                 \texttt{git diff main} \quad vs main branch
             \end{block}
@@ -363,7 +363,7 @@ $ git diff README.md
     \begin{columns}
         \column{0.44\textwidth}
             \uncover<2->{
-            \begin{block}{Useful variants}
+            \begin{block}{Useful variants $\triangleright$}
                 \begin{itemize}
                     \item \texttt{git log} --- full commit history
                     \item \texttt{git log -p} --- history with changes
@@ -403,7 +403,7 @@ Date:   Sun Apr 12 2026
     \begin{columns}
         \column{0.44\textwidth}
             \uncover<2->{
-            \begin{block}{\texttt{git reflog}}
+            \begin{block}{\texttt{git reflog} $\triangleright$}
                 Shows every position \texttt{HEAD} has been.\\[4pt]
                 If you ever think you lost work ---\\
                 look here first.
@@ -411,7 +411,7 @@ Date:   Sun Apr 12 2026
             }
             \vspace{0.4em}
             \uncover<3->{
-            \begin{block}{Go back to any previous state}
+            \begin{block}{Go back to any previous state $\triangleright$}
                 \texttt{git reset --hard 7b1e84a}
             \end{block}
             }
@@ -432,7 +432,7 @@ c4d2f1e HEAD@{2}: commit: initial
     \begin{columns}
         \column{0.52\textwidth}
             \uncover<2->{
-            \begin{block}{What is a branch?}
+            \begin{block}{What is a branch? $\triangleright$}
                 Remember \texttt{analysis\_v2\_experimental.py}?\\
                 A branch does the same thing ---\\
                 without creating extra files.\\[4pt]
@@ -441,7 +441,7 @@ c4d2f1e HEAD@{2}: commit: initial
             }
             \vspace{0.4em}
             \uncover<3->{
-            \begin{block}{Basic commands}
+            \begin{block}{Basic commands $\triangleright$}
                 \begin{tabular}{l@{\quad$\triangleright$\quad}l}
                     \texttt{git branch myidea}    & create       \\[4pt]
                     \texttt{git checkout myidea}  & switch to it \\[4pt]
@@ -476,7 +476,7 @@ git branch -d myidea
     \begin{columns}
         \column{0.44\textwidth}
             \uncover<2->{
-            \begin{block}{What you are seeing}
+            \begin{block}{What you are seeing $\triangleright$}
                 \begin{itemize}
                     \item Each \texttt{*} is a commit
                     \item Lines show branch history
@@ -565,7 +565,7 @@ $ git log --oneline --graph --all
     \begin{columns}
         \column{0.52\textwidth}
             \uncover<1->{
-            \begin{block}{Local repo exists}
+            \begin{block}{Local repo exists $\triangleright$}
                 Tell git where the remote is --- done \textbf{once}.\\[4pt]
                 \texttt{git remote add origin}\\
                 \texttt{\quad git@github.com:you/myproject.git}\\[4pt]
@@ -574,7 +574,7 @@ $ git log --oneline --graph --all
             \end{block}}
             \vspace{0.4em}
             \uncover<2->{
-            \begin{block}{No local repo yet}
+            \begin{block}{No local repo yet $\triangleright$}
                 \texttt{git clone} creates the directory,\\
                 initialises git, and connects the remote\\
                 --- all in one step.\\[4pt]
@@ -583,7 +583,7 @@ $ git log --oneline --graph --all
             \end{block}}
         \column{0.44\textwidth}
             \uncover<3->{
-            \begin{block}{Directory vs Repository}
+            \begin{block}{Directory vs Repository $\triangleright$}
                 A \textbf{directory} is any folder\\
                 on your filesystem.\\[6pt]
                 A \textbf{repository} is a directory\\
@@ -599,7 +599,7 @@ $ git log --oneline --graph --all
 \begin{frame}[fragile]{Sending and receiving}
     \begin{columns}
         \column{0.48\textwidth}
-            \begin{block}{\texttt{git push}}
+            \begin{block}{\texttt{git push} $\triangleright$}
                 Send your local commits to the remote.\\[4pt]
                 \begin{lstlisting}[language=bash]
 git push
@@ -609,7 +609,7 @@ git push
             \end{block}
         \column{0.48\textwidth}
             \pause
-            \begin{block}{\texttt{git pull}}
+            \begin{block}{\texttt{git pull} $\triangleright$}
                 Get the latest commits from the remote.\\[4pt]
                 \begin{lstlisting}[language=bash]
 git pull
@@ -646,7 +646,7 @@ git pull
             \end{alertblock}
         \column{0.5\textwidth}
             \pause
-            \begin{block}{A push is different}
+            \begin{block}{A push is different $\triangleright$}
                 \begin{itemize}
                     \item Your work lives on a server
                     \item Timestamped --- publicly
@@ -667,13 +667,13 @@ git pull
 
 \begin{frame}[fragile]{The daily habit}
     \centering
-    \begin{block}{Morning --- get what changed}
+    \begin{block}{Morning --- get what changed $\triangleright$}
         \begin{lstlisting}[language=bash]
 git pull
         \end{lstlisting}
     \end{block}
     \vspace{0.6em}
-    \begin{block}{Evening --- save your day}
+    \begin{block}{Evening --- save your day $\triangleright$}
         \begin{lstlisting}[language=bash]
 git add -u
 git commit -m "what I did today"
@@ -706,7 +706,7 @@ git push
     \end{enumerate}
     \vspace{0.8em}
     \pause
-    \begin{block}{Start today}
+    \begin{block}{Start today $\triangleright$}
         \begin{lstlisting}[language=bash]
 git init
 git add your_file.py
