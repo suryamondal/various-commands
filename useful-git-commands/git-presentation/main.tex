@@ -236,51 +236,47 @@ my_project/
 \section{How git works}
 % ─────────────────────────────────────────────────────────────────────────────
 
-\begin{frame}[fragile]{How git works --- four commands}
+\begin{frame}{How git works --- four commands}
     \begin{columns}
         \column{0.48\textwidth}
             \begin{block}{\texttt{git init}}
                 Tell git to start tracking\\
                 this directory.\\[4pt]
-                \begin{lstlisting}[language=bash]
-git init
-                \end{lstlisting}
+                \texttt{\$ git init}\\[4pt]
                 \textit{Creates \texttt{.git/}. Done once per project.}
             \end{block}
             \vspace{0.4em}
-            \pause
+            \uncover<4->{
+            \begin{block}{\texttt{git push}}
+                Send your commits to the remote.\\[4pt]
+                \texttt{\$ git push}\\[4pt]
+                \textit{Now it leaves your machine. Now it is safe.}
+            \end{block}
+            }
+        \column{0.48\textwidth}
+            \uncover<2->{
             \begin{block}{\texttt{git add}}
-                Tell git which file to include\\
+                Tell git which files to include\\
                 in the next snapshot.\\[4pt]
-                \begin{lstlisting}[language=bash]
-git add analysis.py
-                \end{lstlisting}
+                \texttt{\$ git add analysis.py README.md}\\[4pt]
                 \textit{Completely offline. Nothing moves.}
             \end{block}
-        \column{0.48\textwidth}
-            \pause
+            }
+            \vspace{0.4em}
+            \uncover<3->{
             \begin{block}{\texttt{git commit}}
                 Save that snapshot locally\\
                 with a short description.\\[4pt]
-                \begin{lstlisting}[language=bash]
-git commit -m "added new plot"
-                \end{lstlisting}
+                \texttt{\$ git commit -m "added new plot"}\\[4pt]
                 \textit{Still offline. Lives in \texttt{.git/} only.}
             \end{block}
-            \vspace{0.4em}
-            \pause
-            \begin{block}{\texttt{git push}}
-                Send your commits to the remote.\\[4pt]
-                \begin{lstlisting}[language=bash]
-git push
-                \end{lstlisting}
-                \textit{Now it leaves your machine. Now it is safe.}
-            \end{block}
+            }
     \end{columns}
-    \pause
+    \uncover<5->{
     \centering
     \vspace{0.4em}
     \texttt{init} $\rightarrow$ \texttt{add} $\rightarrow$ \texttt{commit} $\rightarrow$ \texttt{push} \quad --- \quad \small That is the entire workflow.
+    }
 \end{frame}
 
 % ─────────────────────────────────────────────────────────────────────────────
