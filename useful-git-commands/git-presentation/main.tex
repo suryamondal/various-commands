@@ -112,7 +112,7 @@ analysis_final_REAL_submitted_2.py
 
 \begin{frame}{You invented version control (without knowing it)}
     \begin{columns}
-        \column{0.5\textwidth}
+        \column{0.48\textwidth}
             \begin{block}{What you do manually}
                 \begin{tabular}{ll}
                     \texttt{\_v1}, \texttt{\_v2}      & $\leftarrow$ version tag    \\[4pt]
@@ -121,7 +121,7 @@ analysis_final_REAL_submitted_2.py
                     keeping old files                  & $\leftarrow$ history        \\
                 \end{tabular}
             \end{block}
-        \column{0.5\textwidth}
+        \column{0.48\textwidth}
             \pause
             \begin{block}{What git does automatically}
                 \begin{tabular}{ll}
@@ -161,50 +161,6 @@ analysis_final_REAL_submitted_2.py
 \end{frame}
 
 % ─────────────────────────────────────────────────────────────────────────────
-\section{A Familiar Story}
-% ─────────────────────────────────────────────────────────────────────────────
-
-\begin{frame}{You have been here before --- \LaTeX}
-    \begin{columns}
-        \column{0.5\textwidth}
-            \begin{block}{When you first saw \LaTeX}
-                \begin{itemize}
-                    \item Comfortable with Word --- you could see the output
-                    \item Resisted the change
-                    \item Then the realisation:
-                \end{itemize}
-                \vspace{0.4em}
-                \textit{``Word owns your document.\\
-                \LaTeX\ gives it back ---\\
-                plain ASCII, portable,\\
-                compile anywhere, by anyone.''}
-                \vspace{0.4em}
-                \begin{itemize}
-                    \item Never went back.
-                \end{itemize}
-            \end{block}
-        \column{0.5\textwidth}
-            \pause
-            \begin{block}{Git is the same story}
-                \begin{itemize}
-                    \item Comfortable with \texttt{\_v1}, \texttt{\_v2}
-                    \item Resisting the change
-                    \item The realisation:
-                \end{itemize}
-                \vspace{0.4em}
-                \textit{``Your filenames own your history.\\
-                Git gives it back ---\\
-                searchable, timestamped,\\
-                always recoverable.''}
-                \vspace{0.4em}
-                \begin{itemize}
-                    \item You will not go back.
-                \end{itemize}
-            \end{block}
-    \end{columns}
-\end{frame}
-
-% ─────────────────────────────────────────────────────────────────────────────
 \section{What is git}
 % ─────────────────────────────────────────────────────────────────────────────
 
@@ -214,9 +170,9 @@ analysis_final_REAL_submitted_2.py
             \begin{lstlisting}
 my_project/
 |-- .git/       <- git lives HERE
-|-- analysis.py
-|-- results.csv
-`-- README.md
+|-- analysis.py <- tracked by git
+|-- results.csv <- NOT tracked by git
+`-- README.md   <- tracked by git
             \end{lstlisting}
             \vspace{0.5em}
             \begin{itemize}
@@ -226,14 +182,18 @@ my_project/
                 \item Everything git knows lives right there
             \end{itemize}
         \column{0.44\textwidth}
-            \pause
-            \begin{alertblock}{That is all git is}
-                A tool installed on your computer.\\[6pt]
-                It tracks changes to files\\
-                you tell it to track.\\[6pt]
-                It works completely offline.
-            \end{alertblock}
     \end{columns}
+    \pause
+    \begin{tikzpicture}[remember picture, overlay]
+        \node[draw=red, line width=2pt, fill=white, rounded corners=4pt,
+              text width=0.55\textwidth, align=center, inner sep=14pt]
+              at (current page.center) {
+            \textbf{\large That is all git is}\\[8pt]
+            A tool installed on your computer.\\[6pt]
+            It tracks changes to files you tell it to track.\\[6pt]
+            It works completely offline.
+        };
+    \end{tikzpicture}
 \end{frame}
 
 % ─────────────────────────────────────────────────────────────────────────────
@@ -273,33 +233,84 @@ my_project/
 \end{frame}
 
 % ─────────────────────────────────────────────────────────────────────────────
+\section{How git works}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}[fragile]{How git works --- four commands}
+    \begin{columns}
+        \column{0.48\textwidth}
+            \begin{block}{\texttt{git init}}
+                Tell git to start tracking\\
+                this directory.\\[4pt]
+                \begin{lstlisting}[language=bash]
+git init
+                \end{lstlisting}
+                \textit{Creates \texttt{.git/}. Done once per project.}
+            \end{block}
+            \vspace{0.4em}
+            \pause
+            \begin{block}{\texttt{git add}}
+                Tell git which file to include\\
+                in the next snapshot.\\[4pt]
+                \begin{lstlisting}[language=bash]
+git add analysis.py
+                \end{lstlisting}
+                \textit{Completely offline. Nothing moves.}
+            \end{block}
+        \column{0.48\textwidth}
+            \pause
+            \begin{block}{\texttt{git commit}}
+                Save that snapshot locally\\
+                with a short description.\\[4pt]
+                \begin{lstlisting}[language=bash]
+git commit -m "added new plot"
+                \end{lstlisting}
+                \textit{Still offline. Lives in \texttt{.git/} only.}
+            \end{block}
+            \vspace{0.4em}
+            \pause
+            \begin{block}{\texttt{git push}}
+                Send your commits to the remote.\\[4pt]
+                \begin{lstlisting}[language=bash]
+git push
+                \end{lstlisting}
+                \textit{Now it leaves your machine. Now it is safe.}
+            \end{block}
+    \end{columns}
+    \pause
+    \centering
+    \vspace{0.4em}
+    \texttt{init} $\rightarrow$ \texttt{add} $\rightarrow$ \texttt{commit} $\rightarrow$ \texttt{push} \quad --- \quad \small That is the entire workflow.
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
 \section{What git gives you}
 % ─────────────────────────────────────────────────────────────────────────────
 
 \begin{frame}{What git gives YOU --- not the team}
     \begin{columns}
-        \column{0.5\textwidth}
-            \begin{block}{Ownership with a timestamp}
+        \column{0.48\textwidth}
+            \begin{block}{\emph{Ownership with a timestamp} $\triangleright$}
                 Every commit is signed, dated,\\
                 and attributed to you.\\[4pt]
                 \textit{Your work diary --- automatic.}
             \end{block}
             \vspace{0.5em}
-            \begin{block}{A personal time machine}
+            \begin{block}{\emph{A personal time machine} $\triangleright$}
                 Revert anything, anytime.\\
                 Experiment without fear.\\[4pt]
                 \textit{Nothing is ever truly deleted.}
             \end{block}
-        \column{0.5\textwidth}
-            \begin{block}{Work from anywhere}
+        \column{0.48\textwidth}
+            \begin{block}{\emph{Work from anywhere} $\triangleright$}
                 Office, home, cluster.\\
-                \texttt{git pull} and you are up to date.\\[4pt]
+                One sync command and you are up to date.\\[4pt]
                 \textit{No USB. No rsync. No email to yourself.}
             \end{block}
             \vspace{0.5em}
-            \begin{block}{Freedom to break things}
-                Create a branch. Try something crazy.\\
-                Throw it away if it fails.\\[4pt]
+            \begin{block}{\emph{Freedom to break things} $\triangleright$}
+                Create an isolated copy of your work.\\
+                Try something crazy. Throw it away if it fails.\\[4pt]
                 \textit{Your main code is untouched.}
             \end{block}
     \end{columns}
