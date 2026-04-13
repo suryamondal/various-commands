@@ -10,7 +10,7 @@ you instruct it to do. It never touches any `data`. This is important when you a
 on a cluster. You can quickly change the code in your local machine, then push it to remote,
 then pull it to the cluster. This saves time as you do not need to involve `rsync` in this.**
 
-`GitGub`, `GitLab`, `BitBucket`, etc. uses the same `git` to host the documents tracked by `git`
+`GitHub`, `GitLab`, `BitBucket`, etc. uses the same `git` to host the documents tracked by `git`
 in our local machine. This gives us more advantages.
 - the graphical representation is better than a terminal.
 - working on the same code from multiple terminals. **Most important to me**
