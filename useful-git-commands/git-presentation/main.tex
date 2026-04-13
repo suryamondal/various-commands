@@ -52,7 +52,7 @@
 % ── diagrams & boxes ───────────────────────────────────────────────────────────
 \usepackage{tcolorbox}
 \usepackage{tikz}
-\usetikzlibrary{tikzmark,overlay-beamer-styles,babel}
+\usetikzlibrary{tikzmark,overlay-beamer-styles,babel,positioning}
 \usepackage{forest}
 \usepackage{eso-pic}
 \usepackage[normalem]{ulem}
@@ -151,7 +151,6 @@ analysis_final_REAL_submitted_2.py
     \pause
     Over decades, they collectively built a solution.\\
     It is \textbf{free}. \; It is \textbf{open source}. \; It runs \textbf{everywhere}.\\
-    \vspace{1.2em}
     \vspace{0.8em}
     \pause
     Every tool asks you to learn some commands --- that is unavoidable.\\[4pt]
@@ -191,7 +190,9 @@ my_project/
             \textbf{\large That is all git is}\\[8pt]
             A tool installed on your computer.\\[6pt]
             It tracks changes to files you tell it to track.\\[6pt]
-            It works completely offline.
+            It works completely offline.\\[6pt]
+            \textit{The moment you run \texttt{git init},\\
+            your directory becomes a repository.}
         };
     \end{tikzpicture}
 \end{frame}
@@ -233,50 +234,299 @@ my_project/
 \end{frame}
 
 % ─────────────────────────────────────────────────────────────────────────────
-\section{How git works}
+\section{Local git}
 % ─────────────────────────────────────────────────────────────────────────────
 
-\begin{frame}{How git works --- four commands}
+\begin{frame}{Local git --- three commands, no internet}
+\centering
+\vspace{0.5em}
+\begin{tikzpicture}[
+    gitbox/.style={draw=black, line width=1.2pt, fill=white,
+                   inner sep=6pt, text width=4.0cm, align=left, font=\small},
+    arr/.style={->, red, line width=0.8pt, shorten >=2pt, shorten <=2pt}
+]
+    \node[gitbox] (init) {
+        \textbf{\texttt{git init}}\\[3pt]
+        Start tracking this directory.\\[3pt]
+        \texttt{\$ git init}\\[3pt]
+        \textit{\scriptsize Creates \texttt{.git/}. Done once per project.}
+    };
+    \node[gitbox, visible on=<2->, right=0.5cm of init] (add) {
+        \textbf{\texttt{git add}}\\[3pt]
+        Choose files for the next snapshot.\\[3pt]
+        \texttt{\$ git add analysis.py README.md}\\[3pt]
+        \textit{\scriptsize Offline. Nothing moves.}
+    };
+    \node[gitbox, visible on=<3->, right=0.5cm of add] (commit) {
+        \textbf{\texttt{git commit}}\\[3pt]
+        Save snapshot with a message.\\[3pt]
+        \texttt{\$ git commit -m "new plot"}\\[3pt]
+        \textit{\scriptsize Still offline. Stored in \texttt{.git/}.}
+    };
+    \draw[arr, visible on=<2->] (init.east)   -- (add.west);
+    \draw[arr, visible on=<3->] (add.east)    -- (commit.west);
+\end{tikzpicture}\\[0.8em]
+\uncover<4->{\small These three commands are all you need to get started.\\[4pt]
+\textbf{None of them touch the network.}}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}[fragile]{git status --- what git sees right now}
     \begin{columns}
-        \column{0.48\textwidth}
-            \begin{block}{\texttt{git init}}
-                Tell git to start tracking\\
-                this directory.\\[4pt]
-                \texttt{\$ git init}\\[4pt]
-                \textit{Creates \texttt{.git/}. Done once per project.}
-            \end{block}
-            \vspace{0.4em}
-            \uncover<4->{
-            \begin{block}{\texttt{git push}}
-                Send your commits to the remote.\\[4pt]
-                \texttt{\$ git push}\\[4pt]
-                \textit{Now it leaves your machine. Now it is safe.}
-            \end{block}
-            }
-        \column{0.48\textwidth}
+        \column{0.44\textwidth}
             \uncover<2->{
-            \begin{block}{\texttt{git add}}
-                Tell git which files to include\\
-                in the next snapshot.\\[4pt]
-                \texttt{\$ git add analysis.py README.md}\\[4pt]
-                \textit{Completely offline. Nothing moves.}
+            \begin{block}{Three zones}
+                \begin{itemize}
+                    \item \textbf{Staged} --- ready to commit
+                    \item \textbf{Modified} --- changed, not staged yet
+                    \item \textbf{Untracked} --- git does not know this file
+                \end{itemize}
             \end{block}
             }
             \vspace{0.4em}
             \uncover<3->{
-            \begin{block}{\texttt{git commit}}
-                Save that snapshot locally\\
-                with a short description.\\[4pt]
-                \texttt{\$ git commit -m "added new plot"}\\[4pt]
-                \textit{Still offline. Lives in \texttt{.git/} only.}
+            \begin{block}{Moving between zones}
+                Stage a file:\\
+                \texttt{git add README.md}\\[4pt]
+                Changed your mind? Unstage it:\\
+                \texttt{git restore --staged README.md}
             \end{block}
             }
+        \column{0.52\textwidth}
+            \begin{lstlisting}
+$ git status
+On branch main
+
+Changes to be committed:
+    modified: analysis.py
+
+Changes not staged for commit:
+    modified: README.md
+
+Untracked files:
+    results.csv
+            \end{lstlisting}
+            \vspace{0.4em}
+            \uncover<4->{
+            \begin{tcolorbox}[colback=red!10, colframe=red, boxrule=1pt,
+                              arc=2pt, boxsep=4pt]
+                \centering\textit{Run \texttt{git status} before anything else. Always.}
+            \end{tcolorbox}
+            }
     \end{columns}
-    \uncover<5->{
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}[fragile]{git diff --- what exactly changed}
+    \begin{columns}
+        \column{0.44\textwidth}
+            \uncover<2->{
+            \begin{block}{Reading the output}
+                \begin{itemize}
+                    \item Lines with \texttt{-} were removed
+                    \item Lines with \texttt{+} were added
+                    \item Unchanged lines have no prefix
+                \end{itemize}
+            \end{block}
+            }
+            \vspace{0.4em}
+            \uncover<3->{
+            \begin{block}{Useful variants}
+                \texttt{git diff} \quad since last commit\\[4pt]
+                \texttt{git diff main} \quad vs main branch
+            \end{block}
+            }
+            \vspace{0.4em}
+            \uncover<4->{
+            \begin{tcolorbox}[colback=red!10, colframe=red, boxrule=1pt,
+                              arc=2pt, boxsep=4pt]
+                \centering\textit{More useful than opening two files and comparing manually.}
+            \end{tcolorbox}
+            }
+        \column{0.52\textwidth}
+            \begin{lstlisting}
+$ git diff README.md
+-## Old section heading
++## New section heading
+ Some line that did not change
+-This line was removed
++This line was added
+            \end{lstlisting}
+    \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}[fragile]{git log --- your full history}
+    \begin{columns}
+        \column{0.44\textwidth}
+            \uncover<2->{
+            \begin{block}{Useful variants}
+                \begin{itemize}
+                    \item \texttt{git log} --- full commit history
+                    \item \texttt{git log -p} --- history with changes
+                    \item \texttt{git log -p file.py} --- history of one file
+                \end{itemize}
+            \end{block}
+            }
+            \vspace{0.4em}
+            \uncover<3->{
+            \begin{tcolorbox}[colback=red!10, colframe=red, boxrule=1pt,
+                              arc=2pt, boxsep=4pt]
+                \centering\textit{Every commit is signed with your name, email.\\
+                Your work diary, automatic.}
+            \end{tcolorbox}
+            }
+        \column{0.52\textwidth}
+            \begin{lstlisting}
+$ git log
+commit a3f9c2d
+Author: Suryanarayan Mondal
+Date:   Mon Apr 13 2026
+
+    added energy calibration
+
+commit 7b1e84a
+Author: Suryanarayan Mondal
+Date:   Sun Apr 12 2026
+
+    first working version
+            \end{lstlisting}
+    \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}[fragile]{git reflog \& git reset --- your safety net}
+    \begin{columns}
+        \column{0.44\textwidth}
+            \uncover<2->{
+            \begin{block}{\texttt{git reflog}}
+                Shows every position \texttt{HEAD} has been.\\[4pt]
+                If you ever think you lost work ---\\
+                look here first.
+            \end{block}
+            }
+            \vspace{0.4em}
+            \uncover<3->{
+            \begin{block}{Go back to any previous state}
+                \texttt{git reset --hard 7b1e84a}
+            \end{block}
+            }
+            \vspace{0.4em}
+        \column{0.52\textwidth}
+            \begin{lstlisting}
+$ git reflog
+a3f9c2d HEAD@{0}: commit: energy calib
+7b1e84a HEAD@{1}: commit: first version
+c4d2f1e HEAD@{2}: commit: initial
+            \end{lstlisting}
+    \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}[fragile]{Branches --- isolated copies of your work}
+    \begin{columns}
+        \column{0.52\textwidth}
+            \uncover<2->{
+            \begin{block}{What is a branch?}
+                Remember \texttt{analysis\_v2\_experimental.py}?\\
+                A branch does the same thing ---\\
+                without creating extra files.\\[4pt]
+                Your \texttt{main} branch is always untouched.
+            \end{block}
+            }
+            \vspace{0.4em}
+            \uncover<3->{
+            \begin{block}{Basic commands}
+                \texttt{git branch myidea} \quad create\\[4pt]
+                \texttt{git checkout myidea} \quad switch to it\\[4pt]
+                \texttt{git checkout main} \quad go back\\[4pt]
+                \texttt{git branch -d myidea} \quad delete
+            \end{block}
+            }
+            \vspace{0.4em}
+            \uncover<4->{
+            \begin{tcolorbox}[colback=red!10, colframe=red, boxrule=1pt,
+                              arc=2pt, boxsep=4pt]
+                \centering\textit{Experiment freely. If it fails,\\
+                delete the branch. Nothing is lost.}
+            \end{tcolorbox}
+            }
+        \column{0.45\textwidth}
+            \begin{lstlisting}[language=bash]
+# create and switch to a new branch
+git branch myidea
+git checkout myidea
+
+# work, add, commit as usual
+git add analysis.py
+git commit -m "new approach"
+
+# not happy? go back to main
+git checkout main
+
+# delete the branch
+git branch -d myidea
+            \end{lstlisting}
+    \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}[fragile]{Visualising the git tree}
+    \begin{columns}
+        \column{0.44\textwidth}
+            \uncover<2->{
+            \begin{block}{What you are seeing}
+                \begin{itemize}
+                    \item Each \texttt{*} is a commit
+                    \item Lines show branch history
+                    \item \texttt{HEAD} is where you are now
+                    \item Branch names shown in colour
+                \end{itemize}
+            \end{block}
+            }
+            \vspace{0.4em}
+            \uncover<3->{
+            \begin{tcolorbox}[colback=red!10, colframe=red, boxrule=1pt,
+                              arc=2pt, boxsep=4pt]
+                \centering\textit{The entire history of your project,\\
+                at a glance.}
+            \end{tcolorbox}
+            }
+        \column{0.52\textwidth}
+            \begin{lstlisting}[language=bash]
+$ git log --oneline --graph --all
+* a3f9c2d (HEAD -> main) merge myidea
+|\
+| * 7b1e84a (myidea) new approach
+| * 3c2d1f0 work in progress
+* | f4e3b2a fixed bug on main
+|/
+* c4d2f1e first working version
+* 9a1b2c3 initial commit
+            \end{lstlisting}
+    \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{All of this. No internet.}
     \centering
-    \vspace{0.4em}
-    \texttt{init} $\rightarrow$ \texttt{add} $\rightarrow$ \texttt{commit} $\rightarrow$ \texttt{push} \quad --- \quad \small That is the entire workflow.
-    }
+    \vspace{0.8em}
+    \large
+    \texttt{init} \quad \texttt{add} \quad \texttt{commit} \quad \texttt{status} \quad \texttt{diff} \quad \texttt{log} \quad \texttt{reflog} \quad \texttt{reset} \quad \texttt{branch}\\[1.2em]
+    \normalsize
+    \pause
+    \textbf{None of these touch the network.}\\[0.4em]
+    \textbf{None of these need an account.}\\[0.4em]
+    \textbf{All of them work on a plane, on a cluster, anywhere.}\\[1.2em]
+    \pause
+    \textit{Now --- what if we want to back it up, or share it?}
 \end{frame}
 
 % ─────────────────────────────────────────────────────────────────────────────
@@ -313,10 +563,78 @@ my_project/
 \end{frame}
 
 % ─────────────────────────────────────────────────────────────────────────────
-\section{Why push}
+\section{Remote git}
 % ─────────────────────────────────────────────────────────────────────────────
 
-\begin{frame}{Why push? \; Not just commit locally?}
+\begin{frame}[fragile]{Connecting to a hub}
+    \begin{columns}
+        \column{0.52\textwidth}
+            Before pushing, your local repository\\
+            needs to know where the remote is.\\[0.6em]
+            \begin{lstlisting}[language=bash]
+git remote add origin \
+  git@github.com:you/myproject.git
+            \end{lstlisting}
+            \vspace{0.4em}
+            \pause
+            \begin{itemize}
+                \item \texttt{origin} is just a name --- an alias
+                \item You can have multiple remotes
+                \item Done \textbf{once} per repository
+            \end{itemize}
+        \column{0.44\textwidth}
+            \pause
+            \begin{block}{Directory vs Repository}
+                A \textbf{directory} is any folder\\
+                on your filesystem.\\[6pt]
+                A \textbf{repository} is a directory\\
+                that git is tracking --- it has\\
+                a \texttt{.git/} folder inside.\\[6pt]
+                From the outside, they look identical.
+            \end{block}
+    \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}[fragile]{Sending and receiving}
+    \begin{columns}
+        \column{0.48\textwidth}
+            \begin{block}{\texttt{git push}}
+                Send your local commits to the remote.\\[4pt]
+                \begin{lstlisting}[language=bash]
+git push
+                \end{lstlisting}
+                \textit{Your work is now backed up.\\
+                Timestamped. Publicly yours.}
+            \end{block}
+        \column{0.48\textwidth}
+            \pause
+            \begin{block}{\texttt{git pull}}
+                Get the latest commits from the remote.\\[4pt]
+                \begin{lstlisting}[language=bash]
+git pull
+                \end{lstlisting}
+                \textit{Office, home, cluster.\\
+                Always in sync.}
+            \end{block}
+    \end{columns}
+    \vspace{0.8em}
+    \pause
+    \centering
+    \texttt{[Your laptop \;\; .git/]}
+    \quad
+    $\begin{array}{c}
+        \xrightarrow{\quad\texttt{push}\quad}\\[-4pt]
+        \xleftarrow{\quad\texttt{pull}\quad}
+    \end{array}$
+    \quad
+    \texttt{[GitHub]}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}{Why push every day?}
     \begin{columns}
         \column{0.5\textwidth}
             \begin{alertblock}{Local commits die with your laptop}
@@ -375,31 +693,30 @@ git push
 
 \begin{frame}[fragile]{Summary}
     \begin{enumerate}
-        \setlength\itemsep{0.5em}
+        \setlength\itemsep{0.4em}
         \item \textbf{You were already doing it} ---
               \texttt{\_v1}, \texttt{\_v2} is manual version control
-        \item \textbf{git does it properly} ---
-              automatic, searchable, always recoverable
         \item \textbf{git is local} ---
               no internet, no account, just a folder
+        \item \textbf{Learn a handful of commands} ---
+              \texttt{init}, \texttt{add}, \texttt{commit}, \texttt{status}, \texttt{diff}, \texttt{log}
         \item \textbf{GitHub is the bonus} ---
-              a copy in the cloud, with a nice face
+              connect once, then push daily
         \item \textbf{Push daily} ---
               backup $+$ ownership $+$ peace of mind
     \end{enumerate}
-    \vspace{1em}
+    \vspace{0.8em}
     \pause
     \begin{block}{Start today}
         \begin{lstlisting}[language=bash]
 git init
 git add your_file.py
 git commit -m "start tracking my work"
-git push
         \end{lstlisting}
     \end{block}
     \centering
-    \vspace{0.4em}
-    \textit{One repo. One push. Today.}
+    \vspace{0.3em}
+    \textit{One repo. One commit. Today.}
 \end{frame}
 
 % ─────────────────────────────────────────────────────────────────────────────
