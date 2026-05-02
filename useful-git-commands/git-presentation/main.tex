@@ -703,6 +703,35 @@ git pull
 \end{frame}
 
 % ─────────────────────────────────────────────────────────────────────────────
+
+\begin{frame}[fragile]{When push is rejected --- just read it}
+    \begin{lstlisting}[language=bash, basicstyle=\ttfamily\scriptsize]
+$ git push
+To github.com:you/myproject.git
+ ! [rejected]  feature/42-new-analysis -> feature/42-new-analysis (non-fast-forward)
+error: failed to push some refs to `github.com:you/myproject.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. If you want to integrate the remote changes,
+hint: use `git pull' before pushing again.
+    \end{lstlisting}
+    \pause
+    \vspace{0.6em}
+    Git is not broken. Git is \textbf{telling you exactly what happened}\\
+    and \textbf{exactly what to do}.\\[0.8em]
+    \pause
+    Someone else pushed to this branch while you were working.\\
+    Pull their changes first, then push yours.\\[0.8em]
+    \pause
+    \begin{lstlisting}[language=bash]
+git pull   # conflict? git marks the files -> edit -> git commit
+git push
+    \end{lstlisting}
+    \pause
+    \vspace{0.4em}
+    \textbf{The most important git skill: read the output.} \small Git rarely leaves you without a hint.
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
 \section{Summary}
 % ─────────────────────────────────────────────────────────────────────────────
 
