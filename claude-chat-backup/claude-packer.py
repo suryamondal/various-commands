@@ -5,9 +5,9 @@ Pack Claude Code chat history (~/.claude/projects/<encoded>) and per-project
 local .claude/ directories for selected sources into a portable tar.gz.
 
 All sources are $HOME-relative. The encoded form of ~/.claude/projects/<...>
-is derived from the resolved physical path (`Path.resolve()`) at pack time
-and again at unpack time, so the archive survives different home dirs, mount
-points, and symlinks across machines.
+is derived from the resolved physical path at pack time by splitting on any
+non-alphanumeric character and rejoining with hyphens — matching how Claude
+itself encodes project paths regardless of underscores or other separators.
 
 Run with: python3 claude-packer.py
 """
@@ -15,6 +15,7 @@ Run with: python3 claude-packer.py
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import sys
 import tarfile
@@ -27,7 +28,9 @@ from pathlib import Path
 SOURCES: list[str] = [
     "products/fessdyne-futura/ingest/mems-arrays/v3/firmware",
     "products/fessdyne-futura/ingest/mems-arrays/v3/hardware",
+    "products/Docs/20260203-TIPP-2026",
     "Downloads/tmp/various-commands",
+    "Downloads/tmp/to-be-published"
 ]
 
 OUT_DIR = Path.home() / "Downloads"
@@ -35,7 +38,8 @@ CLAUDE_PROJECTS_DIR = Path.home() / ".claude" / "projects"
 
 
 def encode_path(absolute_path: Path) -> str:
-    return str(absolute_path).replace("/", "-")
+    words = re.split(r'[^a-zA-Z0-9]+', str(absolute_path))
+    return '-' + '-'.join(w for w in words if w)
 
 
 def relpath_to_key(relpath: str) -> str:
