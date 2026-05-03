@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import sys
 import tarfile
@@ -23,7 +24,8 @@ from pathlib import Path
 
 
 def encode_path(absolute_path: Path) -> str:
-    return str(absolute_path).replace("/", "-")
+    words = re.split(r'[^a-zA-Z0-9]+', str(absolute_path))
+    return '-' + '-'.join(w for w in words if w)
 
 
 def relpath_to_key(relpath: str) -> str:
