@@ -7,7 +7,7 @@ For each entry in the manifest, the source dir $HOME/<relpath> must exist
 (real, mounted, or symlinked) on this machine so the script can resolve the
 physical path and compute the correct ~/.claude/projects/<encoded>/ slot.
 
-Run with: python3 claude-unpacker.py [-h] [--force | --rename-existing] ARCHIVE
+Run with: python3 claude-unpacker.py [-h] [--force | --rename-existing | -i] ARCHIVE
 """
 
 from __future__ import annotations
@@ -50,6 +50,7 @@ def parse_args() -> argparse.Namespace:
             "  --force            overwrite existing targets\n"
             "  --rename-existing  move an existing target aside to\n"
             "                     <target>.bak-<timestamp> before restoring\n"
+            "  --interactive/-i   ask per-project: skip / rename / overwrite\n"
         ),
     )
     parser.add_argument(
@@ -61,13 +62,18 @@ def parse_args() -> argparse.Namespace:
     conflict.add_argument(
         "--force",
         action="store_true",
-        help="overwrite existing targets",
+        help="overwrite existing targets without prompting",
     )
     conflict.add_argument(
         "--rename-existing",
         action="store_true",
         help="move an existing target aside to <target>.bak-<ts> "
              "before restoring",
+    )
+    conflict.add_argument(
+        "--interactive", "-i",
+        action="store_true",
+        help="ask per-project what to do: skip / rename / overwrite",
     )
     return parser.parse_args()
 
@@ -89,6 +95,57 @@ def prepare_target(target: Path, *, force: bool, rename: bool, ts: str) -> bool:
         return True
     print(f"    [skip] target exists: {target}")
     return False
+
+
+def prompt_action(proj_dst: Path | None, local_dst: Path | None) -> str:
+    """Show targets and ask what to do.
+
+    Returns 'skip', 'rename', 'overwrite', or 'proceed'.
+    """
+    has_conflict = False
+    if proj_dst:
+        exists = proj_dst.exists()
+        has_conflict = has_conflict or exists
+        print(f"    chat:  {proj_dst}{' (exists)' if exists else ''}")
+    if local_dst:
+        exists = local_dst.exists()
+        has_conflict = has_conflict or exists
+        print(f"    local: {local_dst}{' (exists)' if exists else ''}")
+
+    if has_conflict:
+        print("    1) skip (default)  2) rename existing  3) overwrite")
+        prompt = "    [1/2/3]> "
+    else:
+        print("    1) skip  2) restore (default)")
+        prompt = "    [1/2]> "
+
+    while True:
+        try:
+            ans = input(prompt).strip()
+        except EOFError:
+            ans = ""
+
+        if has_conflict:
+            if ans in ("", "1"):
+                return "skip"
+            if ans == "2":
+                return "rename"
+            if ans == "3":
+                try:
+                    confirm = input("    Type 'yes' to confirm overwrite: ").strip()
+                except EOFError:
+                    confirm = ""
+                if confirm == "yes":
+                    return "overwrite"
+                print("    (not confirmed, skipping)")
+                return "skip"
+            print("    Please enter 1, 2, or 3.")
+        else:
+            if ans == "1":
+                return "skip"
+            if ans in ("", "2"):
+                return "proceed"
+            print("    Please enter 1 or 2.")
 
 
 def safe_extract(tar: tarfile.TarFile, dst: Path) -> None:
@@ -160,25 +217,36 @@ def main() -> int:
 
             print(f"  [restore] {relpath}")
 
-            if has_projects:
+            proj_dst = (home / ".claude" / "projects" / encoded) if has_projects else None
+            local_dst = (src_dir / ".claude") if has_local else None
+
+            if args.interactive:
+                action = prompt_action(proj_dst, local_dst)
+                if action == "skip":
+                    print("    skipped.")
+                    skipped += 1
+                    continue
+                force = (action == "overwrite")
+                rename = (action == "rename")
+            else:
+                force = args.force
+                rename = args.rename_existing
+
+            if has_projects and proj_dst:
                 proj_src = root_dir / "projects" / key
-                proj_dst = home / ".claude" / "projects" / encoded
                 if proj_src.is_dir():
                     proj_dst.parent.mkdir(parents=True, exist_ok=True)
-                    if prepare_target(proj_dst, force=args.force,
-                                      rename=args.rename_existing, ts=ts):
+                    if prepare_target(proj_dst, force=force, rename=rename, ts=ts):
                         shutil.copytree(proj_src, proj_dst, symlinks=False)
                         restored_projects += 1
                         print(f"    chat history -> {proj_dst}")
                     else:
                         skipped += 1
 
-            if has_local:
+            if has_local and local_dst:
                 local_src = root_dir / "local" / relpath / ".claude"
-                local_dst = src_dir / ".claude"
                 if local_src.is_dir():
-                    if prepare_target(local_dst, force=args.force,
-                                      rename=args.rename_existing, ts=ts):
+                    if prepare_target(local_dst, force=force, rename=rename, ts=ts):
                         shutil.copytree(local_src, local_dst, symlinks=False)
                         restored_local += 1
                         print(f"    local .claude/ -> {local_dst}")
@@ -189,8 +257,11 @@ def main() -> int:
         print(f"Restored: {restored_projects} chat histories, "
               f"{restored_local} local .claude/")
         if skipped:
-            print(f"Skipped:  {skipped} (target exists -- rerun with "
-                  f"--force or --rename-existing)")
+            if args.interactive:
+                print(f"Skipped:  {skipped}")
+            else:
+                print(f"Skipped:  {skipped} (target exists -- rerun with "
+                      f"--force or --rename-existing)")
         if missing_src:
             print(f"Missing:  {missing_src} source dir(s) on this machine")
 
