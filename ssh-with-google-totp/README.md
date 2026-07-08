@@ -104,6 +104,10 @@ PermitRootLogin no
 PermitEmptyPasswords no
 HostBasedAuthentication no
 ChallengeResponseAuthentication yes
+# Keep this "no" even though this option allows password login: the password
+# is collected by PAM (pam_unix) through keyboard-interactive, not by SSH's
+# own "password" method. Setting it to "yes" would let password-only logins
+# bypass TOTP entirely.
 PasswordAuthentication no
 PubkeyAuthentication yes
 UsePAM yes
@@ -133,11 +137,16 @@ auth required pam_google_authenticator.so
 ```
 Make sure to comment out `common-auth` mentioned anywhere, otherwise it will ask for password again.
 
-Create a file `/usr/local/bin/check_ssh_auth.sh` with the following content and make it executable.
+Notes on this PAM stack:
+- **Every user in `AllowUsers` must run `google-authenticator` before sshd is restarted.** Without a `~/.google_authenticator` file, `pam_google_authenticator.so` fails and that user is locked out. For a migration window you can append `nullok` to its line (`auth required pam_google_authenticator.so nullok`), but remember that means un-enrolled users log in with *no second factor* — remove it once everyone is enrolled.
+- A wrong password still prompts for a verification code and only fails at the end. That is normal `required` PAM behaviour (it avoids leaking which factor was wrong), not a broken setup.
+
+Create the helper script `/usr/local/bin/check_ssh_auth.sh`:
 ```BASH
 #!/bin/bash
 
-# Log debugging information
+# Debug log (optional): this file is root-owned, never rotated, and the
+# script prints nothing by default. Drop these two lines once things work.
 exec 1>>/var/log/pam_exec.log 2>&1
 
 # If SSH public key authentication succeeded
@@ -148,7 +157,15 @@ fi
 exit 1
 ```
 
-Install google authenticator and register TOTP app.
+Install it root-owned and executable — do not just `chmod +x` a file lying in your home directory:
+```BASH
+sudo install -m 755 -o root -g root check_ssh_auth.sh /usr/local/bin/check_ssh_auth.sh
+```
+Two failure modes to be aware of:
+- If the script is missing or not executable, `pam_exec` fails and `default=ignore` silently falls through to the password line — key users start getting password+TOTP prompts with no error anywhere. That symptom means: check the script.
+- The script runs as root during authentication, so it must be writable by root only. A user-writable script here is a privilege escalation.
+
+Install google authenticator and register TOTP app (**for every allowed user, before restarting sshd**).
 ```BASH
 sudo apt install libpam-google-authenticator
 google-authenticator
