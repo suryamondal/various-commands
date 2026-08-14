@@ -189,12 +189,16 @@ def state_of(host: str) -> tuple[bool, str]:
 
 
 def cmd_status(hosts: list[str]) -> int:
-    print(f"  {'HOST':<{HOST_W}} {'ADDRESS':<46} STATE")
+    # Resolve everything first: MagicDNS names are long enough to overflow a
+    # fixed column, so size it from the addresses actually being printed.
+    rows = [(host, address(host), state_of(host)) for host in hosts]
+    addr_w = max([len(addr) for _, addr, _ in rows] + [len("ADDRESS")]) + 2
+
+    print(f"  {'HOST':<{HOST_W}} {'ADDRESS':<{addr_w}} STATE")
     all_up = True
-    for host in hosts:
-        alive, state = state_of(host)
+    for host, addr, (alive, state) in rows:
         all_up &= alive
-        print(f"  {host:<{HOST_W}} {address(host):<46} {state}")
+        print(f"  {host:<{HOST_W}} {addr:<{addr_w}} {state}")
     if not all_up:
         print("\n  re-dial with: python3 ssh-tunnel.py up [HOST]   (needs a terminal)")
     return 0 if all_up else 1

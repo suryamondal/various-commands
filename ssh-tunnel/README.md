@@ -104,6 +104,9 @@ file is gitignored, since it names real machines on private networks.
   <hostname-4>   <hostname-4>.local       down
 ```
 
+Both columns size themselves to the names being printed, so a MagicDNS name
+does not push `STATE` out of alignment.
+
 `up` and `restart` need a terminal: hosts behind passphrased keys and Google
 Authenticator TOTP ([`../ssh-with-google-totp/README.md`](../ssh-with-google-totp/README.md))
 prompt interactively, nothing is cached or replayed, and hosts are dialed one at
