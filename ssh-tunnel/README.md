@@ -2,11 +2,12 @@
 
 One persistent multiplexed SSH master per host, so later connections (`ssh`,
 `scp`, `rsync`, `git`, VS Code Remote) reuse it instead of re-authenticating.
-Each host is reached by its mDNS name on its LAN and by its Tailscale address
-otherwise — same alias either way.
+Each host is reached by its mDNS name on its LAN and by its Tailscale MagicDNS
+name otherwise — same alias either way, and no addresses to maintain.
 
 Placeholders below: `<hostname-N>` is a machine's real hostname, `<user>` its
-login, `<key>` its private key, `<tailscale-ip>` its `100.x.y.z` address.
+login, `<key>` its private key, `<tailnet>` the MagicDNS suffix from
+`tailscale status --json | grep MagicDNSSuffix`.
 
 ## `~/.ssh/config` structure
 
@@ -26,13 +27,13 @@ Match host <hostname-1>,<hostname-2> exec "timeout 1 nc -z -w1 %h.local 22 >/dev
      HostName %h.local
 
 Host <hostname-1>
-     HostName <tailscale-ip>          # fallback when the LAN probe fails
+     HostName %h.<tailnet>            # MagicDNS fallback when the probe fails
      User <user>
      IdentityFile ~/.ssh/<key>
      HostKeyAlias <hostname-1>        # HostName floats; pin one known_hosts id
 
 Host <hostname-2>
-     HostName <tailscale-ip>
+     HostName %h.<tailnet>
      User <user>
      IdentityFile ~/.ssh/<key>
      HostKeyAlias <hostname-2>
@@ -96,11 +97,11 @@ file is gitignored, since it names real machines on private networks.
 ```
 
 ```
-  HOST           ADDRESS                STATE
-  <hostname-1>   <hostname-1>.local     up (pid 672240)
-  <hostname-2>   <tailscale-ip>         up (pid 672258)
-  <hostname-3>   <hostname-3>.local     up (pid 672269)
-  <hostname-4>   <hostname-4>.local     down
+  HOST           ADDRESS                  STATE
+  <hostname-1>   <hostname-1>.local       up (pid 672240)
+  <hostname-2>   <hostname-2>.<tailnet>   up (pid 672258)
+  <hostname-3>   <hostname-3>.local       up (pid 672269)
+  <hostname-4>   <hostname-4>.local       down
 ```
 
 `up` and `restart` need a terminal: hosts behind passphrased keys and Google
