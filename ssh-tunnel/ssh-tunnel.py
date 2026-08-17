@@ -39,6 +39,12 @@ HOSTS_FILE = Path(__file__).resolve().parent / "tunnel-hosts"
 # set_host_width() once they are known, since the aliases are long.
 HOST_W = 24
 
+# Seconds to wait for the TCP connection when dialing. This bounds only
+# reaching the host - it does NOT limit the authentication that follows, so
+# there is no clock running while you type a passphrase or TOTP code. Wrapping
+# ssh in `timeout` instead would cut the prompt off mid-answer.
+CONNECT_TIMEOUT = 5
+
 _PID_RE = re.compile(r"pid=(\d+)")
 
 # ssh -G is not free: for probed hosts it runs the `Match exec` reachability
@@ -147,7 +153,13 @@ def up_one(host: str) -> str:
     # ~/.ssh/config can exit ~30s after being dialed.  `no` keeps it alive
     # until something explicitly closes it.
     proc = subprocess.run(
-        ["ssh", "-MNf", "-o", "ControlPersist=no", host], check=False
+        [
+            "ssh", "-MNf",
+            "-o", "ControlPersist=no",
+            "-o", f"ConnectTimeout={CONNECT_TIMEOUT}",
+            host,
+        ],
+        check=False,
     )
     if proc.returncode != 0:
         print(f"      FAILED to dial {host} (ssh exit {proc.returncode})", file=sys.stderr)
