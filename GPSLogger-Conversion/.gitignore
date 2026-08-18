@@ -1,0 +1,2 @@
+# gpslogger_to_gpx.py imports egm96, so every run drops bytecode alongside it.
+__pycache__/
