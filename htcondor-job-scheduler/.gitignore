@@ -1,0 +1,19 @@
+# The host list names real machines on private networks - keep it local.
+condor-host-list
+# Command records, captured output, and staged helper scripts name real
+# machines too. Sanitise before tracking any of it.
+logs/
+scripts/
+*~
+
+# Credentials - never track.
+wifi.txt
+*.psk
+*secret*
+
+# LaTeX build products. The sources in latex/ are tracked; the output is not.
+latex/build/
+*.pdf
+
+# Job scratch and test runs. Working area, never tracked.
+run/
