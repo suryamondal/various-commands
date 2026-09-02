@@ -197,6 +197,100 @@ Scope to the subnets rather than to the entry node's address. Its address is
 expected to move between segments - that is what the NetworkManager hook is
 for - so a host-scoped rule breaks the next time it roams.
 
+## A hardware watchdog, so a hang self-recovers
+
+One machine in this pool has hung three times with **no diagnostic trace at
+all**: no panic, no MCE, no thermal event, nothing in the kernel log at the
+moment it stopped. The drive's own counters rule out power loss -
+`unsafe_shutdowns` stayed flat across a crash while `power_cycles` incremented,
+so that counter is live and simply did not record one. The board stays
+energised and the CPU stops.
+
+Nothing in software fixes that. A watchdog makes it self-recover:
+
+```
+sudo modprobe iTCO_wdt                       # Intel TCO timer on these SoCs
+echo iTCO_wdt | sudo tee /etc/modules-load.d/watchdog.conf
+sudo sed -i 's/^#RuntimeWatchdogSec=.*/RuntimeWatchdogSec=60/' /etc/systemd/system.conf
+sudo systemctl daemon-reexec                 # daemon-reload does NOT apply this
+```
+
+systemd then pets the timer every 30s. When the kernel stops executing, petting
+stops and the board resets itself inside a minute.
+
+**Verify it is ARMED, not merely configured** - a configured-but-inactive
+watchdog is false comfort:
+
+```
+cat /sys/class/watchdog/watchdog0/state      # active
+cat /sys/class/watchdog/watchdog0/timeleft   # counting, not stuck
+wdctl                                        # KEEPALIVEPING should be 1
+```
+
+**60s, not 30s.** A machine under heavy openEMS load can stall briefly, and a
+false reset in the middle of someone's job is worse than 30 extra seconds of an
+outage that already lasts hours.
+
+**The diagnostic it buys you is the real prize.** After any future unexplained
+restart:
+
+```
+cat /sys/class/watchdog/watchdog0/bootstatus
+```
+
+Non-zero means **the watchdog fired**, which proves the machine hung rather
+than losing power or being reset by hand. That distinction was unavailable
+before, and it is the only evidence these failures have ever offered.
+
+## NETWORK_INTERFACE does not self-correct, and a port swap breaks Condor
+
+`NETWORK_INTERFACE` is set in `50-worker.config` and **nothing updates it**.
+`condor-network-select` runs as `ExecStartPre` and derives
+`PRIVATE_NETWORK_NAME` into `55-network-select.config` - it does **not** touch
+`NETWORK_INTERFACE`. Confirm for yourself before assuming otherwise:
+
+```
+grep -rn '^NETWORK_INTERFACE' /etc/condor/config.d/
+```
+
+One hit, in the static file. So moving the cable between the two onboard ports
+leaves the pin naming a dead interface, and condor_master fails at startup:
+
+```
+init_network_interfaces:2:Failed to determine my IP address using NETWORK_INTERFACE=enp2s0
+```
+
+then loops under `activating (auto-restart)` forever. The machine stays up, ssh
+works, everything looks fine - and it silently leaves the pool when its ad ages
+out. Observed twice on the same machine, in both directions.
+
+**Fix after any port change:** repoint the pin and restart.
+
+```
+sudo sed -i 's/^NETWORK_INTERFACE = .*/NETWORK_INTERFACE = <live-iface>/' \
+     /etc/condor/config.d/50-worker.config
+sudo systemctl restart condor
+condor_status -af Name MyAddress      # must show the NEW address
+```
+
+## The dispatcher must not block on a Condor restart
+
+`/etc/NetworkManager/dispatcher.d/60-condor-network-change` restarts Condor when
+addressing changes. Written as a plain `systemctl restart condor` it **blocks**:
+the restart runs `condor-network-select`, which resolves `CONDOR_HOST` over mDNS
+- measured at 60s on one machine - and NetworkManager waits for the dispatcher
+script to return. So every cable swap stalls the network stack.
+
+Use `--no-block`, which queues the restart and returns immediately:
+
+```
+systemctl restart --no-block condor
+```
+
+This is worse on any machine where `plymouth-quit-wait` is stuck (see the
+runbook index): there the queued restart never runs at all, so the dispatcher
+blocks until NetworkManager's own timeout.
+
 ## Owner policy
 
 Applies in full and unmodified. These are people's daily drivers, so `SUSPEND`
