@@ -1,10 +1,15 @@
 # Worker: Raspberry Pi (aarch64, no GPU)
 
-**Not yet attempted.** Everything here is reasoned from the Jetson deployment
-and from what the Pi class is known to be, not from a machine that has joined.
-Treat the sizing as a starting point and the warnings as untested.
+**No Pi has joined yet.** Everything about the Pi class here is reasoned from
+the Jetson deployment, not observed. Treat the sizing as a starting point and
+anything marked UNTESTED as exactly that.
 
 Expected: 4 cores, 4 G RAM, ~36 G on SD, Debian 13.
+
+**Ten machines are being added** as `pi-node-NN`, handed to a colleague to
+install. The handover tarball contains this runbook's config as a filled-in
+template, the `condor-owner-session` script, and ten tokens. What follows is the
+operator's copy: the reasoning, and the decisions already made on their behalf.
 
 ## What should carry over unchanged
 
@@ -74,6 +79,69 @@ requirements = (Arch == "AARCH64") && (HostBoardClass =?= "rpi-<model>")
 
 `Arch` must appear, or `condor_submit` appends `Arch == "X86_64"` and the job
 never matches. Same trap as the Jetson.
+
+## Tokens: one identity, ten files
+
+Workers authenticate as the **pool's daemon identity**, not as themselves:
+
+```
+condor_token_create -identity condor@<pool>.internal
+```
+
+`ALLOW_DAEMON` is `condor@*`, so every worker in the fleet — x86, Jetson, both
+Macs — carries this same identity. A per-machine identity would not match and
+the machine would never register.
+
+**Issue them as separate files anyway.** Each carries its own `jti`, so one
+machine can be revoked without invalidating the rest. Ten identical copies of
+one file cannot be. Verify after minting, because "it produced ten files" is
+not the same as "it produced ten distinct tokens":
+
+```
+python3 -c "import base64,json,sys; t=open(sys.argv[1]).read().strip().split('.'); \
+  p=t[1]+'='*(-len(t[1])%4); print(json.loads(base64.urlsafe_b64decode(p)))" <file>
+```
+
+Expect one distinct `sub` across all of them and N distinct `jti`.
+
+Workers need **no Unix account** on the entry node. That is a submitter
+requirement — the schedd forks a shadow as the submitting user — and does not
+apply here.
+
+## Traps this pool has already paid for
+
+All of these were learned on other machines. They apply to a Pi and the first
+two apply *especially*, because these are headless.
+
+**`NETWORK_INTERFACE` does not self-correct.** Set once in the config, updated
+by nothing. `condor-network-select` derives `PRIVATE_NETWORK_NAME` only. If the
+cable moves to another port the pin names a dead interface, `condor_master`
+fails at startup and loops under `activating (auto-restart)` — while the machine
+stays up, ssh works, and everything looks healthy. It leaves the pool silently
+when its ad ages out. Verify with `condor_status -af Name MyAddress` after any
+cabling change.
+
+**The boot splash deadlocks package upgrades on a headless machine.**
+`plymouth-quit-wait.service` runs `plymouth --wait` with no timeout and never
+returns when no monitor is attached. systemd serialises jobs, so any package
+whose postinst runs `systemctl restart` queues behind it and `apt` hangs. Clear
+it with `plymouth quit` **directly** — a `systemctl` call becomes another queued
+job behind the same blockage. Mask the unit to prevent it recurring.
+
+**Verify the cron is publishing, not just that Condor started.** A machine can
+appear in `condor_status`, look healthy, and be incapable of running anything
+because `HostMemAvailMB` is UNDEFINED and `Memory` is 0. Check both.
+
+**Disable `unattended-upgrades`**, as the rest of the fleet does. It holds the
+dpkg lock and breaks deliberate updates; one machine had it running for fifteen
+days. The trade-off is explicit: security updates stop installing themselves.
+
+**A hardware watchdog is worth having here.** These are cheap boards on SD
+cards. `iTCO_wdt` is Intel-specific and will not exist on a Pi — the Pi has its
+own (`bcm2835_wdt`), usually already present as `/dev/watchdog`. Setting
+`RuntimeWatchdogSec` makes a hung board reset itself, and a non-zero
+`/sys/class/watchdog/watchdog0/bootstatus` afterwards proves it hung rather
+than lost power. UNTESTED on this class.
 
 ## Open questions this class will answer
 
