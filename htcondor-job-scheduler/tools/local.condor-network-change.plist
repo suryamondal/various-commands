@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>local.condor-network-change</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/condor-network-change</string>
+    </array>
+
+    <!-- Root: it restarts a LaunchDaemon and writes into /opt/condor/etc. -->
+    <key>UserName</key>
+    <string>root</string>
+
+    <!-- Every 60s. The Linux side hooks NetworkManager and fires instantly;
+         macOS has no equivalent worth trusting, so this polls. The cheap path
+         (addresses unchanged) is one ifconfig and a string compare, so a
+         minute is nothing. Worst case is 60s of staleness before the machine
+         starts recovering, against the observed alternative of forever. -->
+    <key>StartInterval</key>
+    <integer>60</integer>
+
+    <!-- At boot this records the addresses condor just started with and
+         refreshes the derivation, without restarting anything. -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Not KeepAlive: this is a periodic job that exits, and KeepAlive would
+         make launchd respawn it in a tight loop. -->
+
+    <key>StandardOutPath</key>
+    <string>/var/log/condor-network-change.log</string>
+    <key>StandardErrorPath</key>
+    <string>/var/log/condor-network-change.log</string>
+</dict>
+</plist>

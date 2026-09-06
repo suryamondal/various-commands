@@ -1,0 +1,198 @@
+#!/bin/sh
+# Restart condor when this Mac's addressing changes underneath it.
+#
+# WHY THIS IS NEEDED AT ALL
+# A condor daemon resolves its identity once, in DaemonCore init, and there is
+# no path that re-derives it. condor_reconfig re-reads the config files and
+# rebuilds nothing about the address. So a machine that moves takes its old
+# address with it, in three places at once:
+#
+#   the master     keeps dialling the collector address it resolved at start
+#   shared_port    keeps the machine's own former address as its parent's
+#   the startd     restarts (it is a child), gets the CURRENT address, and
+#                  then cannot reach the parent, so it exits status 4 and is
+#                  restarted, forever, roughly every six minutes
+#
+# Observed 2026-09-04 on the second Mac: en1 held 172.16.0.187 at 10:52 and
+# 192.168.0.117 at 11:43. The daemons started at 11:26, in between. Nothing
+# recovers from that without a restart.
+#
+# WHAT THIS DOES NOT COVER
+# Only "this machine's addresses moved". It does NOT catch condor starting
+# before the network exists -- observed 2026-09-04 on the first Mac, where the
+# master came up at boot, found en0 unaddressed, froze 127.0.0.1 as its private
+# command socket and stayed unreachable to its own children for 19 hours.
+# Nothing changes afterwards, so an address-change trigger never fires. That
+# case is prevented by the start wrapper and caught by
+# condor-registration-watchdog, which triggers on the OUTCOME -- the collector
+# is reachable and does not list us -- rather than on any particular cause.
+#
+# WHY IT IS A POLL AND NOT AN EVENT
+# The Linux side hooks NetworkManager's dispatcher and fires instantly. macOS
+# has no equivalent worth trusting for this, so this polls. The cheap path --
+# addresses unchanged -- is one ifconfig and a string compare, which is free at
+# this interval. Everything expensive sits behind that check.
+#
+# Install: /usr/local/bin/condor-network-change (root, 0755)
+# Driven by: /Library/LaunchDaemons/local.condor-network-change.plist
+
+# /var/run is cleared at boot, which is exactly the semantics wanted: the
+# reference is "the addresses condor last started with", and after a boot
+# condor has just started.
+STATE=/var/run/condor-network.addrs
+PENDING=/var/run/condor-network.pending
+
+# condor_restart -peaceful returns rc=0 immediately but does NOT restart
+# immediately. Measured 2026-09-06 on an IDLE machine: the command returned in
+# under a second and the daemons turned over 5 minutes later. So the wait has
+# to be generous, and it has to happen across ticks rather than inside one --
+# a synchronous 45s wait inside a 60s tick would escalate every single time.
+ESCALATE_AFTER=900          # 15 min: comfortably past the observed 5
+HARD_CEILING=7200           # 2 h: the longest a running job may hold this off
+
+PLIST=/Library/LaunchDaemons/edu.wisc.cs.htcondor.plist
+SELECT=/usr/local/bin/condor-network-select
+SEL_OUT=/opt/condor/etc/config.d/55-network-select.config
+CS=/opt/condor/release/sbin
+CONDOR_CONFIG=/opt/condor/etc/condor_config
+export CONDOR_CONFIG
+
+log() { logger -t condor-network-change "$@"; }
+now() { date +%s; }
+
+# Addresses this machine holds. Apple's own plumbing -- anpi*, awdl0, llw0,
+# utun*, bridge0, ap1 -- comes and goes for reasons that have nothing to do
+# with the pool, and bouncing condor for them would make this worse than not
+# having it.
+addr_snapshot() {
+    ifconfig -a inet 2>/dev/null | awk '
+        /^[a-z]/ {
+            iface = substr($1, 1, length($1) - 1)
+            skip = (iface ~ /^(lo|gif|stf|anpi|awdl|llw|utun|bridge|ap)[0-9]*$/)
+        }
+        /^[ \t]*inet / && !skip { print iface " " $2 }
+    ' | sort | tr '\n' ';'
+}
+
+# THE COMPLETION SIGNAL IS THE STARTD's PID, NOT THE ADDRESS.
+# condor_restart re-execs the master IN PLACE: same pid, and if the address has
+# not changed, a byte-identical sinful string right down to sock=master_<pid>.
+# Measured 2026-09-06: master 10125 before and after, .master_address
+# unchanged, while procd/shared_port/startd were all newly spawned. Using the
+# address as the signal calls a successful restart a failure and escalates to
+# launchd, killing the job the peaceful restart just protected.
+startd_pid() { pgrep -x condor_startd; }
+
+launchd_restart() {
+    # bootout, then WAIT for the processes to actually go. Not
+    # `launchctl kickstart -k`, which SIGKILLs the master and leaves
+    # condor_shared_port and condor_startd orphaned to ppid 1, still holding
+    # port 9618 and still advertising. That happened on 2026-09-03.
+    launchctl bootout system/edu.wisc.cs.htcondor 2>/dev/null
+    i=0
+    while [ "$i" -lt 40 ]; do
+        LEFT="$(pgrep -x condor_master)$(pgrep -x condor_startd)$(pgrep -x condor_shared_port)$(pgrep -x condor_procd)"
+        [ -z "$LEFT" ] && break
+        sleep 1
+        i=$((i + 1))
+    done
+    # Stragglers are killed by PID. condor rewrites argv[0] to a bare name with
+    # no path, so a pkill -f pattern matches nothing and reports success while
+    # doing it.
+    for n in condor_startd condor_shared_port condor_preen condor_procd condor_master; do
+        P=$(pgrep -x "$n")
+        if [ -n "$P" ]; then
+            log "straggler $n pid $P after ${i}s of bootout; kill -9"
+            kill -9 $P 2>/dev/null
+        fi
+    done
+    sleep 2
+    launchctl bootstrap system "$PLIST" 2>/dev/null
+    log "launchd restart complete (rc=$?)"
+}
+
+launchctl print system/edu.wisc.cs.htcondor >/dev/null 2>&1 || exit 0
+
+NEW=$(addr_snapshot)
+
+# --- a restart already asked for; is it done, or is it overdue? --------------
+if [ -s "$PENDING" ]; then
+    read -r ASKED OLDPID < "$PENDING"
+    CURPID=$(startd_pid)
+    ELAPSED=$(( $(now) - ASKED ))
+
+    if [ -n "$CURPID" ] && [ "$CURPID" != "$OLDPID" ]; then
+        rm -f "$PENDING"
+        printf '%s' "$NEW" > "$STATE" 2>/dev/null
+        log "peaceful restart completed after ${ELAPSED}s (startd $OLDPID -> $CURPID)"
+        exit 0
+    fi
+
+    if [ "$ELAPSED" -lt "$ESCALATE_AFTER" ]; then
+        exit 0
+    fi
+
+    # Overdue. A running job is the one good reason to keep waiting: -peaceful
+    # is doing exactly what was asked of it, and escalating would throw the
+    # work away. Everything else has waited long enough.
+    if pgrep -x condor_starter >/dev/null 2>&1 && [ "$ELAPSED" -lt "$HARD_CEILING" ]; then
+        log "peaceful restart pending ${ELAPSED}s; a job is still running, continuing to wait"
+        exit 0
+    fi
+
+    log "peaceful restart did not complete in ${ELAPSED}s; escalating to launchd"
+    launchd_restart
+    rm -f "$PENDING"
+    printf '%s' "$NEW" > "$STATE" 2>/dev/null
+    exit 0
+fi
+
+# --- no restart pending ------------------------------------------------------
+OLD=$(cat "$STATE" 2>/dev/null)
+
+# Cheap path: nothing moved. This is the 99.9% case and must stay cheap.
+if [ -n "$OLD" ] && [ "$OLD" = "$NEW" ]; then
+    exit 0
+fi
+
+# First tick after boot. condor has just started with these addresses, so
+# there is nothing stale yet -- record and refresh the derivation, no restart.
+if [ -z "$OLD" ]; then
+    printf '%s' "$NEW" > "$STATE" 2>/dev/null
+    [ -x "$SELECT" ] && "$SELECT"
+    log "first tick after boot; recorded ${NEW:-none}, derivation refreshed, no restart"
+    exit 0
+fi
+
+log "addresses changed: ${OLD:-none} -> ${NEW:-none}"
+
+# Re-derive which of the entry node's two addresses applies from here. This is
+# the half that goes silently wrong: a machine with a stale derivation still
+# registers, still matches, still runs jobs to completion, and then cannot
+# return their output.
+BEFORE=$(cat "$SEL_OUT" 2>/dev/null)
+[ -x "$SELECT" ] && "$SELECT"
+AFTER=$(cat "$SEL_OUT" 2>/dev/null)
+[ "$BEFORE" != "$AFTER" ] && log "derivation changed"
+
+# Ask peacefully. The master re-execs, which rebuilds the sinful string and
+# leaves launchd's supervision untouched, and running jobs finish first.
+#
+# This requires _condor@$(UID_DOMAIN) in ALLOW_ADMINISTRATOR. Without it the
+# tool exits in under a second with
+#   SECMAN:2010:Received "DENIED" from server for user _condor@...
+# which is easy to miss because the rc is checked and the message is not. If
+# that is the state of this machine, the deadline below expires and launchd
+# does the job instead -- correctly, but at the cost of any running work.
+if [ -x "$CS/condor_restart" ]; then
+    PID_AT_ASK=$(startd_pid)
+    "$CS/condor_restart" -peaceful >/dev/null 2>&1
+    printf '%s %s\n' "$(now)" "$PID_AT_ASK" > "$PENDING" 2>/dev/null
+    log "asked for a peaceful restart (startd was $PID_AT_ASK); will escalate in ${ESCALATE_AFTER}s"
+    exit 0
+fi
+
+log "condor_restart not present; going straight to launchd"
+launchd_restart
+printf '%s' "$NEW" > "$STATE" 2>/dev/null
+exit 0

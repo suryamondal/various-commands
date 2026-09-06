@@ -246,6 +246,13 @@ produces a machine that registers, matches and runs jobs, then loses their
 output. **6 and 1** cost the most time to diagnose, because both leave something
 looking healthy while it is not.
 
+**11 has cost the most actual downtime** - 19 hours on one machine - and **10**
+is the one that hid for longest, a week, because its symptom was something
+nobody had reason to try. Both were found in the same week and neither is
+possible on a Linux worker, which is the pattern worth carrying: what breaks on
+these machines is not Condor, it is the places where macOS has no equivalent of
+something systemd was quietly providing.
+
 
 **1. `vm_stat` is the wrong way to measure free memory, and being wrong here
 takes the machine out of the pool silently.** The obvious port of Linux
@@ -407,3 +414,104 @@ not scale with a volume Condor cannot use.** The memory floors already solve
 exactly this asymmetry with `max(absolute, fraction)`; the disk floors never
 got the same treatment. Unresolved - decide it once for both machines rather
 than pruning each time.
+
+
+**10. Every admin command is denied on a Mac, and the reason is one
+underscore.** `condor_restart`, `condor_off`, `condor_on`, `condor_reconfig`,
+`condor_drain` and `condor_vacate` had all been refused on both Macs since the
+day they were installed. Nobody noticed for a week, because the only operation
+anyone reached for was a restart, and `launchctl` does that — while evicting
+any running job.
+
+A condor tool run as root does not stay root. It drops to `CONDOR_IDS` before
+authenticating, so `FS` auth presents it as the *service account*:
+
+```
+Linux   uid=127(condor)    ->  condor@sssd-iot-pool.internal    matches condor@*   OK
+macOS   uid=442(_condor)   ->  _condor@sssd-iot-pool.internal   matches nothing    DENIED
+```
+
+against a list that is byte-identical on both platforms, because both inherit
+it from the same metaknob:
+
+```
+ALLOW_ADMINISTRATOR = condor@* condor_pool@* root@*
+  # at: /opt/condor/etc/condor_config, line 29, use SECURITY:recommended_v9_0+10
+```
+
+Section 4 creates the account as `_condor` — Apple's convention for a service
+account, and the right choice — but the authorisation list was never told. The
+failure is not a warning and not a hang; it is immediate and quiet:
+
+```
+# condor_restart -peaceful
+SECMAN:2010:Received "DENIED" from server for user
+_condor@sssd-iot-pool.internal using method FS.
+Can't send Set-Peaceful-Shutdown command to local startd
+```
+
+Fix, appended to `/opt/condor/etc/condor_config` *after* the metaknob:
+
+```
+ALLOW_ADMINISTRATOR = $(ALLOW_ADMINISTRATOR) _condor@$(UID_DOMAIN)
+```
+
+Scoped to `UID_DOMAIN` rather than `@*`: it names one local service account,
+which already owns every condor process and file on the host, so it is strictly
+narrower than the `root@*` the same list already carries.
+
+Beware the diagnosis: on a machine whose daemons are *unreachable* the same
+command appears to **hang** instead, because the conversation never reaches
+authentication. Three separate investigations were spent on the wrong theory
+before a healthy machine produced the real error in one second.
+
+Two things follow from having `condor_restart` back:
+
+*It re-execs the master in place.* Measured: master pid `10125` before and
+after, `etime` continuous across the restart, while `procd`, `shared_port` and
+`startd` were all newly spawned. So launchd's supervision is untouched, the
+private command socket **is** rebuilt, and `launchctl bootout`/`bootstrap` —
+with its orphan hazard — is needed only as a fallback.
+
+*`-peaceful` is not fast, even when idle.* It returns `rc=0` in under a second
+and the daemons turn over about **five minutes** later. Anything that waits
+synchronously for it will conclude it failed.
+
+And do not use the advertised address as the "did it restart" signal. On a
+same-pid re-exec at an unchanged address, `.master_address` is byte-identical
+before and after, down to `sock=master_10125_7c7f`. Watch the startd's pid.
+
+
+**11. condor can start at boot before the network exists, and freezes loopback
+in.** On 2026-09-04 the first Mac booted and `condor_master` started while
+`en0` still had no address:
+
+```
+09/04/26 15:35:24  ** condor_master (CONDOR_MASTER) STARTING UP
+09/04/26 15:35:24  DaemonCore: private command socket at <127.0.0.1:0?...>
+```
+
+Every previous start on that machine recorded `172.16.0.134` — because every
+previous start was a manual one, on a running system. Only the boot hits the
+race.
+
+The machine then looks fine from outside. Its *public* address is correct, its
+config is correct, `condor_config_val` reports the right values, and
+`.master_address` reads `172.16.0.134`. Only the private command socket, used
+for parent/child traffic, is loopback — so the children cannot reach their own
+master, exit status 4, and are restarted about every 13 minutes. It stayed out
+of the pool for 19 hours, and the only evidence was its absence.
+
+The Linux workers cannot do this: `condor.service` carries
+`After=network-online.target`. launchd has no equivalent, and no ordering
+primitive that expresses it. So the plist's `Program` must be a wrapper that
+waits for a routable address on `NETWORK_INTERFACE` before `exec`-ing
+`condor_master` — `exec`, so launchd keeps supervising the same pid. That
+wrapper is also the natural home for the pre-start derivation, which is what
+the Linux unit's `ExecStartPre` does.
+
+Note that `condor-network-change` does **not** catch this. It triggers on the
+addresses *changing*, and here nothing ever changes after boot. The catch-all
+is `condor-registration-watchdog`, which triggers on the outcome — the
+collector is reachable and does not list this machine — and is therefore
+indifferent to which of these three causes produced it.
