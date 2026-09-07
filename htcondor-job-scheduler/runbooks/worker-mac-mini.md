@@ -183,14 +183,38 @@ machine both. `shred -u <file>`.
 
 ## 8. launchd
 
-`/Library/LaunchDaemons/edu.wisc.cs.htcondor.plist`, running
-`condor_master -f`. **The `-f` is not optional**: launchd supervises the
-process it spawned, so a master that daemonises is seen to exit immediately and
-gets restarted forever. systemd's `Type=simple` has the same requirement.
+`/Library/LaunchDaemons/edu.wisc.cs.htcondor.plist`. **`ProgramArguments` must
+be the wrapper, not `condor_master` directly:**
+
+```
+<key>ProgramArguments</key>
+<array>
+    <string>/usr/local/bin/condor-master-start</string>
+</array>
+```
+
+`tools/condor-master-start-macos` is the launchd-shaped stand-in for two things
+the Linux `condor.service` gets for free — `After=network-online.target` and
+`ExecStartPre=condor-network-select`. launchd has no ordering primitive that
+expresses "after the network" and no pre-start hook, so both are done in the
+wrapper. It waits for a *routable* address (169.254/16 does not count — a
+self-assigned address bakes in the same way loopback does), runs the
+derivation, records the boot snapshot for `condor-network-change`, and then
+`exec`s the master. Without it, see trap 11.
+
+Two things about that wrapper are load-bearing:
+
+**`exec`**, so the master replaces the shell *in the same process* and launchd
+goes on supervising the right pid. Without it launchd watches a shell that has
+nothing left to do, and a master that dies is never noticed.
+
+**`-f`**, for the same reason one level down: launchd supervises the process it
+spawned, so a master that daemonises is seen to exit immediately and gets
+restarted forever. systemd's `Type=simple` has the identical requirement.
 
 `UserName` is `root` — an execute node must switch users to run a job as
 `nobody`. `CONDOR_CONFIG` must be set in `EnvironmentVariables`, because the
-tarball has no compiled-in config path.
+tarball has no compiled-in config path, and the wrapper inherits it from there.
 
 ```
 sudo -k ; sudo launchctl enable system/edu.wisc.cs.htcondor ; sudo -k

@@ -155,8 +155,13 @@ if [ -n "$OLD" ] && [ "$OLD" = "$NEW" ]; then
     exit 0
 fi
 
-# First tick after boot. condor has just started with these addresses, so
-# there is nothing stale yet -- record and refresh the derivation, no restart.
+# No reference at all. Normally impossible: condor-master-start writes this
+# file immediately before exec'ing the master, so the reference is always "what
+# the master actually resolved at start". Reaching here means the wrapper is
+# not installed, so fall back to recording what exists now -- which is weaker,
+# because an address that arrives between condor starting and this tick then
+# looks like the state condor started with, and a master that had already
+# frozen loopback would never be restarted.
 if [ -z "$OLD" ]; then
     printf '%s' "$NEW" > "$STATE" 2>/dev/null
     [ -x "$SELECT" ] && "$SELECT"
