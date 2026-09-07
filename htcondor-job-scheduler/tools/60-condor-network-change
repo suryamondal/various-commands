@@ -59,6 +59,65 @@ addr_snapshot() {
         tr '\n' ';'
 }
 
+# HOW TO RESTART WITHOUT THROWING THE JOB AWAY
+#
+# `systemctl restart condor` is a SIGTERM to the master. With this pool's
+# MaxJobRetirementTime = 0 that evicts immediately: the job is not lost -- it
+# returns to idle and runs again elsewhere -- but hours of openEMS are. For a
+# machine whose address just moved that is usually the right trade, and for one
+# that is busy it is not.
+#
+# So the cases are separated, and each gets the answer that costs least:
+#
+#   central     systemctl restart, ALWAYS, busy or not. This machine's absence
+#   manager     is a pool-wide outage, not one lost job, and a peaceful restart
+#               waits indefinitely -- which here means the whole pool waits.
+#               One evicted job is the cheaper of the two.
+#
+#   worker,     systemctl restart. Nothing to preserve, and it is immediate,
+#   idle        which matters because until it happens the machine is
+#               unreachable anyway.
+#
+#   worker,     condor_restart -peaceful. The startd stops accepting new claims
+#   busy        and the daemons restart once the current job finishes. Nothing
+#               is wasted.
+#
+# The macOS side needs a far more elaborate version of this -- a pending-state
+# file, a deadline, an escalation path -- because a launchd StartInterval job
+# cannot sit waiting for a five-minute restart and nothing else is watching.
+# Here condor-registration-watchdog.timer is the net under the peaceful path:
+# every five minutes it restarts any machine the collector can reach but does
+# not list. Verified present and enabled on a worker; verified ABSENT on the
+# entry node, which is the other half of why the entry node never takes the
+# peaceful path.
+#
+# condor_restart is usable at all only because the daemon account matches
+# ALLOW_ADMINISTRATOR. On Linux that is `condor`, which matches the stock
+# `condor@*`. On macOS it is `_condor`, which matches nothing, and the same
+# command is refused in under a second -- see runbooks/worker-mac-mini.md trap
+# 10 before assuming this function is portable.
+restart_condor() {
+    # Is this the central manager? Ask what it runs, rather than comparing
+    # hostnames against CONDOR_HOST, which is a name that has to resolve.
+    if condor_config_val DAEMON_LIST 2>/dev/null | grep -q COLLECTOR; then
+        logger -t condor-network-change "$1; this is the central manager, restarting immediately"
+        systemctl restart condor
+        return
+    fi
+
+    if pgrep -x condor_starter >/dev/null 2>&1; then
+        logger -t condor-network-change "$1; a job is running, asking for a peaceful restart"
+        if condor_restart -peaceful >/dev/null 2>&1; then
+            return
+        fi
+        logger -t condor-network-change -p daemon.err \
+            "condor_restart -peaceful was refused; falling back to systemctl restart, which evicts the running job"
+    else
+        logger -t condor-network-change "$1; machine is idle, restarting condor now"
+    fi
+    systemctl restart condor
+}
+
 REASON=""
 
 # 1. Did this machine's own addressing change?
@@ -82,8 +141,7 @@ if [ -x /usr/local/bin/condor-network-select ]; then
 fi
 
 if [ -n "$REASON" ]; then
-    logger -t condor-network-change "$IFACE $ACTION: $REASON; restarting condor"
-    systemctl restart condor
+    restart_condor "$IFACE $ACTION: $REASON"
 fi
 
 exit 0
