@@ -101,7 +101,7 @@ restart_condor() {
     # hostnames against CONDOR_HOST, which is a name that has to resolve.
     if condor_config_val DAEMON_LIST 2>/dev/null | grep -q COLLECTOR; then
         logger -t condor-network-change "$1; this is the central manager, restarting immediately"
-        systemctl restart condor
+        systemctl restart --no-block condor
         return
     fi
 
@@ -115,7 +115,7 @@ restart_condor() {
     else
         logger -t condor-network-change "$1; machine is idle, restarting condor now"
     fi
-    systemctl restart condor
+    systemctl restart --no-block condor
 }
 
 REASON=""

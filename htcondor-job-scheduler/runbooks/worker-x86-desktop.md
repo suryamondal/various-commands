@@ -291,6 +291,77 @@ This is worse on any machine where `plymouth-quit-wait` is stuck (see the
 runbook index): there the queued restart never runs at all, so the dispatcher
 blocks until NetworkManager's own timeout.
 
+**This was documented here and never actually implemented.** Checked
+2026-09-07: no revision of the script had ever carried `--no-block` - not the
+copy deployed on the fleet since 22 August, not the one in `tools/`, not the
+rewrite that replaced it. The runbook prescribed the fix and every machine ran
+without it. Corrected in the script; worth reading as a warning that a runbook
+saying "use X" is not evidence that anything uses X.
+
+Note it only ever fixes half the stall. The dispatcher also calls
+`condor-network-select` *directly*, in the derivation check, before any restart
+is queued - so the mDNS resolution happens on the dispatcher's own thread
+regardless. `--no-block` removes the restart's copy of that cost, not the
+hook's own.
+
+## Restarting without throwing the running job away
+
+The hook now picks one of three restarts rather than always doing the hardest
+one. `systemctl restart condor` is a SIGTERM to the master, and with this pool's
+`MaxJobRetirementTime = 0` that evicts immediately - the job is not *lost*, it
+returns to idle and runs again elsewhere, but hours of openEMS are.
+
+| machine | state | action |
+|---|---|---|
+| central manager | any | `systemctl restart --no-block` |
+| worker | idle | `systemctl restart --no-block` |
+| worker | running a job | `condor_restart -peaceful` |
+
+**The central manager never takes the peaceful path**, busy or not, and that is
+deliberate twice over. `-peaceful` waits *indefinitely* for jobs to finish; on
+the machine holding the collector that means the whole pool waits on one job
+while the collector advertises an address that no longer exists. One evicted job
+is far cheaper. And the safety net below it is not installed there.
+
+The entry node **is** also a startd and does run jobs - it was running one when
+this was deployed - so an idle/busy split alone would have caught it. It is
+identified by asking what it runs:
+
+```
+condor_config_val DAEMON_LIST | grep -q COLLECTOR
+```
+
+not by comparing hostnames against `CONDOR_HOST`, which is a name that has to
+resolve, on a hook whose whole purpose is addressing having just changed.
+
+**What makes the peaceful path safe is `condor-registration-watchdog.timer`**,
+which every five minutes restarts any machine the collector can reach but does
+not list. If a peaceful restart never completes, that is what catches it. Verify
+it is actually running before trusting the peaceful branch on a given machine:
+
+```
+systemctl is-enabled condor-registration-watchdog.timer
+systemctl is-active  condor-registration-watchdog.timer
+```
+
+Measured 2026-09-07: `enabled/active` on the worker checked, `not-found` on the
+entry node.
+
+**And check the tool is authorised**, because a refusal is silent - the hook
+falls back to the hard restart and the job is lost anyway. `condor_ping` asks
+without performing anything:
+
+```
+sudo -k ; sudo condor_ping -type startd ADMINISTRATOR ; sudo -k
+```
+
+Expect `succeeded as condor@<UID_DOMAIN>`. A condor tool run as root drops to
+`CONDOR_IDS` before authenticating, so what must match `ALLOW_ADMINISTRATOR` is
+the *service account*, not root. On Linux that account is `condor` and matches
+the stock `condor@*`. On macOS it is `_condor` and matches nothing, which is why
+the Mac runbook needs a whole trap for it and why their watcher carries a
+deadline-and-escalate apparatus instead of relying on this branch.
+
 ## Owner policy
 
 Applies in full and unmodified. These are people's daily drivers, so `SUSPEND`
