@@ -1,222 +1,310 @@
-# Mandatory Introduction
+# Introduction
+
 Human memory is volatile. We keep forgetting things we `committed` yesterday.
 Here comes `git` to help us.
 
 `git` is a nice tool to track the changes of any document, from a piece of code to a latex report.
 With this, one not only `saves` a document, but saves the version of the document as it evolves.
 
-**There can be hundreds of objects in a directory. The beauty is that, `git` only tracks those, which
+**There can be hundreds of objects in a directory. The beauty is that, `git` only tracks those which
 you instruct it to do. It never touches any `data`. This is important when you are running jobs
 on a cluster. You can quickly change the code in your local machine, then push it to remote,
 then pull it to the cluster. This saves time as you do not need to involve `rsync` in this.**
 
-`GitGub`, `GitLab`, `BitBucket`, etc. uses the same `git` to host the documents tracked by `git`
+`GitHub`, `GitLab`, `BitBucket`, etc. use the same `git` to host the documents tracked by `git`
 in our local machine. This gives us more advantages.
-- the graphical representation is better than a terminal.
-- working on the same code from multiple terminals. **Most important to me**
-- one can keep a `remote` copy of the work done in `local` machine.
-- one can keep the `remote` public, so that others can see/use it.
-- a team of people can collaborate on the same project. Other can discuss and verify before a change
-is incorporated in the project.
+- the graphical representation is better than a terminal
+- working on the same code from multiple terminals — **most important to me**
+- one can keep a `remote` copy of the work done in the `local` machine
+- one can keep the `remote` public, so that others can see/use it
+- a team of people can collaborate on the same project; others can discuss and verify before a change is incorporated
 
-# BRANCH: Main usefulness of `git`
+---
+
+## Table of Contents
+
+- [Branching](#branching)
+- [Git Manuals](#git-manuals)
+- [Workflow Overview](#workflow-overview)
+- [Setting Up a Repository](#setting-up-a-repository)
+  - [Initialize a Local Repository](#initialize-a-local-repository)
+  - [Create a Readme File](#create-a-readme-file)
+  - [Track a File](#track-a-file)
+  - [First Commit](#first-commit)
+  - [Check Status](#check-status)
+  - [Add a Remote Repository](#add-a-remote-repository)
+  - [Push to Remote](#push-to-remote)
+  - [Clone a Remote Repository](#clone-a-remote-repository)
+  - [Create a New Branch](#create-a-new-branch)
+  - [Pull Changes from Remote](#pull-changes-from-remote)
+- [Pull Requests](#pull-requests)
+- [Forks](#forks)
+- [Git Diff](#git-diff)
+- [Git Log](#git-log)
+- [Git Reflog](#git-reflog)
+- [Remove a Large File from History](#remove-a-large-file-from-history)
+- [Move Tracked Files to a New Directory](#move-tracked-files-to-a-new-directory)
+
+---
+
+## Branching
+
 ![git_tree](https://github.com/suryamondal/useful_git_commands/blob/main/backup/git_tree.png?raw=true)
 
 In the above tree, `blue` is the `main` branch. Nobody touches it directly. One creates a branch of
-`main` (shown in `green` and `magenta`) and work in that branch only. Once the testing is satisfied,
+`main` (shown in `green` and `magenta`) and works in that branch only. Once testing is satisfied,
 one can create a `pull request` to `merge` the branch with `main`. One might add `reviewers` with
 the request. Upon approval from all the reviewers, the branch can be merged to main.
 
-# Some useful git commands and the uses of those
-*Here I listed some of the git commands and how to use them efficiently or not-efficiently.*
+## Git Manuals
 
-## GIT Manuals
-Git has extended manual in Linux. Use the following methods to browse.
+Git has extended manuals in Linux. Use the following methods to browse.
 ```
 man git
 man git-branch
 man git-mv
 man git-log
 man git-diff
-.......
-.......
 ```
-One thing to note here. Manual for `git branch` is written in `git-branch`. The `hyphen` is necessary. 
+Note that the manual for `git branch` is accessed as `git-branch` — the hyphen is required.
 
-## Flow of git methods:
-There are mainly three ways to initialise a `local` git repository. Please continue reading for more details.
+## Workflow Overview
+
+### Status Monitoring Loop
+
+Run these commands repeatedly to stay aware of your repository's state.
+
 ```mermaid
-graph TD;
-    id17[git status]-->id18[git log]-->id5[git diff]-->id36[git reflog]-->id17;
-    id0[In local terminal]-->id1[Make a dir and go in it]-->id2[git init]-->id3[git add path/to/file]-->id4[git commit]-->id6[git branch -M main];
-    id6-->id7[git remote add origin1 url/to/remote/repository]-->id8[git push -u origin1 main];
-    id8-->id9[git branch newbranch]-->id10[git checkout newbranch]-->id11[git add newfile]-->id12[git commit]-->id13[git push -u origin1 newbranch];
-    id13-.->id11;
-    id13-->id14[Create a pull request in github]-->id15[Merge newbranch with main]-->id19[git checkout main]-->id9;
-    id14--Change if required-->id11;
-    id10-->id35[git pull]-->id11;
-    id10-.->id34[git pull origin2 branchname]-.->id11;
-    id41[Create an empty remote repository]-->id20[git clone url/to/remote/repository]-->id21[Go into the dir]
-    id21-->id26[git remote rename origin origin1]-->id9;
-    id60[Remote repository]--Exists-->id43;
-    id60--Does not exists-->id41;
-    id43[Existing remote repository]--If fork can be created-->id22;
-    id43--without edit permission-->id50[git clone url/to/remote/repository]-->id55[git remote rename origin origin2];
-    id55-->id51[Create your own empty remote repository]-->id54[Go into the dir];
-    id54-->id52[git remote add origin1 url/to/empty/remote/repository]-->id53[git push -u origin1 --all]-->id9;
-    id43--with edit permission-->id20;
-    id22[Create a fork]-->id23[git clone url/to/forked/repository]-->id24[Go in the dir]-->id25[git remote rename origin origin1];
-    id25-->id27[git remote add origin2 url/to/original/repository]-->id9;
-    id13-.->id30[git checkout main]-.->id31[git pull]-.->id32[git checkout newbranch]-.->id33[git merge main]-.->id13;
+graph LR
+    A[git status] --> B[git log] --> C[git diff] --> D[git reflog] --> A
 ```
 
-## If possible, create the GIT repository first in remote. Then clone it in your local PC.
-Use the following command to get the remote repository in your local PC.
+### Initialization Paths
+
+There are three ways to set up a local git repository. All three lead to the same branch workflow.
+
+```mermaid
+graph TD
+    R{Does a remote repo exist?}
+
+    R -->|No| L1[Create a local directory]
+    L1 --> L2[git init]
+    L2 --> L3[git add files]
+    L3 --> L4[git commit]
+    L4 --> L5[git branch -M main]
+    L5 --> L6[git remote add origin1 url]
+    L6 --> BW[Branch Workflow]
+
+    R -->|Yes - with edit permission| C1[git clone url]
+    C1 --> C2[git remote rename origin origin1]
+    C2 --> BW
+
+    R -->|Yes - fork available| F1[Create a fork]
+    F1 --> F2[git clone forked url]
+    F2 --> F3[git remote rename origin origin1]
+    F3 --> F4[git remote add origin2 original url]
+    F4 --> BW
+
+    R -->|Yes - no edit permission| N1[git clone url]
+    N1 --> N2[git remote rename origin origin2]
+    N2 --> N3[Create your own empty remote repo]
+    N3 --> N4[git remote add origin1 your url]
+    N4 --> N5[git push -u origin1 --all]
+    N5 --> BW
 ```
+
+### Branch Workflow
+
+```mermaid
+graph TD
+    A[git branch newbranch] --> B[git checkout newbranch]
+    B --> C[git pull]
+    C --> D[Edit files]
+    D --> E[git add files]
+    E --> F[git commit]
+    F --> G[git push -u origin1 newbranch]
+    G --> H[Create pull request on GitHub]
+    H --> I{Changes requested?}
+    I -->|Yes| D
+    I -->|No - approved| J[Merge into main]
+    J --> K[git checkout main]
+    K --> A
+```
+
+## Setting Up a Repository
+
+> **Tip:** If possible, create the repository on GitHub/GitLab first, then clone it locally. This avoids the manual remote-setup steps below.
+
+```bash
 git clone git@github.com:suryamondal/useful_git_commands.git
 cd useful_git_commands
 ```
-This repository comes loaded with necessary files which are required for `git`.
 
-If you already started working at the local PC, then you have to initialise the `git` repository first in your local directory.
+The cloned repository comes with all the necessary git configuration files.
 
-### Initialise the Local Repository:
+If you already started working locally, you need to initialize git in your existing directory instead.
+
+### Initialize a Local Repository
+
 A git `repository` is synonymous to a `folder` or `directory`, but actually not. A git repository
 resides inside a physical directory, and that is the end of the similarity.
 
-We go inside the folder/directory named `useful_git_commands`. We then execute the following command.
-```
+Go inside the directory and run:
+```bash
 git init
 ```
-This creates a directory named `.git` inside `useful_git_commands` and fills it with all the necessary objects. **We, amateurs, must never cause any harm to this one.**
+This creates a `.git` directory and fills it with all the necessary objects. **Never modify this directory manually.**
 
-### Create a readme file:
-In git, it is must to have a `README.md` file. It should be in plain ASCII. Please follow [this link](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) to know more on how to format it with beauty.
+### Create a Readme File
 
-### Make git to track a file:
-Git does not automatically track all the files in a directory. We need to `add` the specific files
-to `git`. A file can be added to `git` using the following command,
-```
+Every git project should have a `README.md` file written in plain ASCII. See [GitHub's formatting guide](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) for markdown syntax.
+
+### Track a File
+
+Git does not automatically track all files in a directory. Add specific files using:
+```bash
 git add README.md
 ```
 
-### First commit:
-We have added one file to git. Now we need to `commit` it. Execute the following command to commit.
-```
+### First Commit
+
+```bash
 git commit -am "First Commit"
 ```
-**Note**:
-- If you do not use the `-a` flag, only the files `staged` are are committed. There may be situations where some modified files might be in the `unstaged` area. You need to execute `git add path/to/file` to bring them into staging are. And then commit using `git commit -m "some message"`. This is useful if you need to commit files separately.
-- If you do not use the `-m` flag, an editor (i.e. nano, vim, etc.) will be opened. Write the message there. Then save and exit. Commit is over. You can change the choice of default editor.
 
-### Check the status of git:
-The following command display the status. Any files modified, staged or unstaged are displayed here.
-```
+**Notes:**
+- Without `-a`, only staged files are committed. Use `git add path/to/file` to stage a file, then `git commit -m "message"` to commit. This is useful when committing files separately.
+- Without `-m`, an editor (nano, vim, etc.) will open for you to write the message. You can change the default editor in git config.
+
+### Check Status
+
+```bash
 git status
 ```
-You will notice that the branch name is `master`. We usually change it to `main` for the default branch. For this, execute the following command.
-```
+
+Displays modified, staged, and unstaged files. You will notice the branch name defaults to `master`. Rename it to `main` with:
+```bash
 git branch -M main
 ```
 
-Now we are ready to `push` this to a `remote repository`.
+### Add a Remote Repository
 
-### Remote Repository:
-This will be an exact copy of the local repository. For this,
-- You need to have account on a `git` server (i.e. `github`, `bitbucket`, `gitlab`, etc.).
-- Upload your `SSH Keys` to the servers. Follow [this link](https://github.com/suryamondal/ssh_and_github) for details.
-- You need to create an empty repository in server (say, `useful_git_commands`).
-- Copy the link of the remote (find it in Clone->SSH tab). Then
+Requirements:
+- An account on a git server (GitHub, GitLab, Bitbucket, etc.)
+- SSH keys uploaded to the server — see [this guide](https://github.com/suryamondal/ssh_and_github)
+- An empty repository created on the server
 
-Execute the following command to add a `remote` repository to your `local` repository. 
-```
+Link the remote to your local repository:
+```bash
 git remote add origin1 git@github.com:suryamondal/useful_git_commands.git
 ```
-Where, `origin1` is sort of an alias to the remote repository. You can have as many as origins if you want to push/pull from any of them. This is particularly useful if you want to keep a copy of your code to multiple repository.
 
-### Push to a remote repository:
-To push the branch `main` to `origin1`, execute the following.
-```
+`origin1` is an alias for the remote URL. You can have multiple remotes (e.g. `origin1`, `origin2`) to push or pull from different locations — useful for mirroring a repo across multiple hosts.
+
+### Push to Remote
+
+```bash
 git push -u origin1 main
 ```
 
-### Clone a remote repository to another terminal:
-Now say, you pushed a branch to `origin1` from a terminal. You want to get the it to a new terminal.
-Just execute the following.
-```
+### Clone a Remote Repository
+
+To get the repository onto a new machine:
+```bash
 git clone git@github.com:suryamondal/useful_git_commands.git
 ```
-This will create a directory named `useful_git_commands` with all the files and `.git` folder.
 
-**Warning:** In this local repository, the alias to `remote` is set as `origin` by default. You might rename it using `git remote rename origin origin1`. 
+This creates a `useful_git_commands` directory with all files and the `.git` folder.
 
-### Creating a new branch
-Now we are in the `main` branch. **We should never edit the main branch directly**. Always create a branch, edit and test everything there. Then merge it to the `main` using a `pull request`.
+> **Note:** The default remote alias after cloning is `origin`. Rename it if needed: `git remote rename origin origin1`.
 
-To create a branch say, `bugfix/add-menu`, use the following command.
+### Create a New Branch
+
+**Never edit the main branch directly.** Always create a branch, edit and test there, then merge via a pull request.
+
+```bash
+# From the latest commit:
+git branch bugfix/add-menu
+
+# From a specific previous commit (use 'git log' to find the SHA):
+git branch bugfix/add-menu <sha1-of-commit>
 ```
-git branch bugfix/add-menu                  : if from the latest commit
-git branch bugfix/add-menu <sha1-of-commit> : if from a previous commit (use 'git log' to get sha hash)
-```
 
-Go to the branch using,
-```
+Switch to the branch:
+```bash
 git checkout bugfix/add-menu
 ```
 
-Then commit, push, pull using this branch name.
+Then commit, push, and pull using this branch name.
 
-### Pull the changes from a remote, you pushed from a different terminal
+### Pull Changes from Remote
+
+```bash
+# Pull from the default remote:
+git pull
+
+# Pull from a specific remote and branch (use carefully):
+git pull origin1 main
 ```
-git pull                : if you want to pull from the default remote
-git pull origin1 main   : if you want to pull from a specific remote and branch (use carefully)
-```
-With `git pull`, the branch `bugfix/add-menu` will also be loaded in this local machine.
-use `git checkout bugfix/add-menu` to start editing the branch in this machine.
+
+After pulling, a branch like `bugfix/add-menu` will be available locally. Use `git checkout bugfix/add-menu` to start working on it.
 
 ## Pull Requests
-Once your branch is ready and tested, it is time to merge it with the `main`. For this,
-- First create a `pull request` in `github`. You may add reviewers for this operation.
-- Discussion thread is available in each pull request. Discuss anything if there is conflicts.
-- Do the changes if required, then commit, push; if required, then in multiple iterations.
-- With each push, the pull request will also get updated.
-- Once all the reviewers have approved the request, you can go ahead to `merge` your branch with `main`.
+
+Once your branch is ready and tested, it is time to merge it with `main`.
+- Create a `pull request` on GitHub. You may add reviewers.
+- A discussion thread is available on each pull request for resolving conflicts.
+- Make changes if required, then commit and push — the pull request updates automatically with each push.
+- Once all reviewers have approved, merge the branch into `main`.
 
 ## Forks
-If you do not have permission to edit a remote repository, there are two ways to get it to your own remote.
-1. Clone it, then push it to your own remote repository.
-   - Add the original remote as `origin2`.
-   - You can `pull` from the `origin2`, in case any changes in there.
-   - Disadvantage: Both are detached, and thus cannot be compared directly.
-2. Create a `fork` of that remote, and then `clone` the `fork`. This gives the following added advantages.
-   - You will be able to compare both the repositories.
+
+If you do not have permission to edit a remote repository, there are two ways to get it into your own remote.
+
+1. **Clone and push to your own remote** — Add the original remote as `origin2` so you can pull updates from it. Disadvantage: both repositories are detached and cannot be compared directly on GitHub.
+
+2. **Create a fork** — Fork the repository on GitHub, then clone the fork. Added advantages:
+   - You can compare both repositories on GitHub.
    - You can create a `pull request` from `origin1` to `origin2`.
 
-# GIT DIFF
-This is probably the most interesting command of all, if used properly. It can be used in may way.
-- `git diff`        : It shows the changes you have done after the last commit
-- `git diff main`   : This shows the (committed) difference between `main` and this branch.
-- any other possible combinations.
+## Git Diff
 
-### GIT LOG
-I usually push the changes to remote, and then browse it on a browser to check the logs. But one might execute `git log` in local machine to see the commit log. Useful formats,
-```
-git log                 : shows commit info
-git log -p              : shows changes
-git log -p <filename>   : shows changes in a specific file
+Probably the most useful command when used well.
+
+```bash
+git diff        # changes since the last commit
+git diff main   # committed differences between main and the current branch
 ```
 
-### GIT REFLOG
-This shows the position of `head`. It is useful if you want to reset to any previous commit, using `git reset --hard bd6903f`. But please try not use it, better to create a branch from that specific commit. It is written above.
+## Git Log
 
-### In case a large file is added to git and it is needed to be removed from each commit
+Browse commit history. Usually easier to read on GitHub, but useful locally too.
+
+```bash
+git log                  # shows commit info
+git log -p               # shows changes
+git log -p <filename>    # shows changes in a specific file
 ```
+
+## Git Reflog
+
+Shows the position of `HEAD`. Useful if you want to reset to a previous commit:
+```bash
+git reset --hard bd6903f
+```
+
+Prefer creating a new branch from that specific commit over hard-resetting where possible.
+
+## Remove a Large File from History
+
+```bash
 git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch path/to/file' --prune-empty --tag-name-filter cat -- --all
 git push origin1 --force --all
 ```
 
-### Move all git-traced files/directories to a new directory
-```BASH
+## Move Tracked Files to a New Directory
+
+```bash
 mkdir -p IPL_v1
 git ls-files | while read -r file; do
   mkdir -p "IPL_v1/$(dirname "$file")"
