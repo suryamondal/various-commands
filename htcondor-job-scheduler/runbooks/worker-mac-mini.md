@@ -69,6 +69,10 @@ The daemons are x86_64. Confirm before starting:
 
 If absent: `softwareupdate --install-rosetta`.
 
+**Not only at install time.** A major macOS upgrade can remove Rosetta, and
+Condor then never starts again after the reboot — see trap 12. Re-run the two
+checks above after every macOS upgrade.
+
 **Rosetta does not slow the jobs down.** An x86_64 process execs an arm64
 binary natively, so anything under `/opt/products` runs at full speed. Only
 the control-plane daemons are translated, and they are idle. Verify on any new
@@ -539,3 +543,48 @@ addresses *changing*, and here nothing ever changes after boot. The catch-all
 is `condor-registration-watchdog`, which triggers on the outcome — the
 collector is reachable and does not list this machine — and is therefore
 indifferent to which of these three causes produced it.
+
+
+**12. A macOS upgrade removes Rosetta, and Condor never comes back.** On
+2026-09-17 the first Mac took the macOS 27 upgrade. The installer stopped
+Condor cleanly, rebooted, and Rosetta 2 did not come back:
+
+```
+macOS 27    installed 17/09/2026, 18:59:40
+MasterLog   09/17/26 18:59:40  Got SIGTERM. Performing graceful shutdown.
+booted      Thu Sep 17 19:02:43
+```
+
+Every binary in the tarball is x86_64, so from that boot onward none of them
+could run — not the daemons, and not `condor_config_val` either:
+
+```
+master-stderr.log   condor_master: Bad CPU type in executable
+arch -x86_64 /usr/bin/true  ->  Bad CPU type in executable    (Apple's own binary)
+pgrep oahd                  ->  nothing
+pkgutil --pkg-info com.apple.pkg.RosettaUpdateAuto  ->  No receipt
+```
+
+launchd did exactly what it is told to: respawn, every ten seconds. `runs =
+40010`, `last exit code = 1`, over four and a half days, and the machine was out
+of the pool the whole time.
+
+**Nothing noticed.** The config was fine, the network was fine, and the start
+wrapper ran every time — it found the address, logged "exec condor_master", and
+the kernel refused the binary. `launchctl print` says `spawn scheduled`, which
+reads like a service that is starting, not one that has failed forty thousand
+times. The only visible symptom was absence from `condor_status`.
+
+Fix, and it needs no Condor restart — launchd's next respawn simply succeeds:
+
+```
+sudo -k ; sudo softwareupdate --install-rosetta --agree-to-license ; sudo -k
+arch -x86_64 /usr/bin/true && echo ok      # must print ok
+```
+
+On 27.0 Rosetta reinstalled cleanly and the machine was back in the pool within
+seconds. Apple has said Rosetta's scope narrows after macOS 27; when an upgrade
+arrives where this command no longer restores it, the Macs need a native arm64
+Condor build and the tarball approach in section 1 stops working. Check the
+release notes before letting either Mac take a major upgrade, and run the
+section 2 checks immediately after one.
