@@ -75,6 +75,14 @@ Validate the config, then restart `sshd`. On Ubuntu, `ssh` and `sshd` are the sa
 sudo sshd -t && sudo systemctl restart ssh
 ```
 
+> **Fresh install (Ubuntu 22.10+ / 24.04):** `sshd -t` may fail with `Missing privilege separation directory: /run/sshd`. sshd uses that empty root-owned directory as a jail for its unprivileged pre-login process. `/run` is wiped at every boot, and systemd only recreates `/run/sshd` when `ssh.service` starts — which, with socket activation, doesn't happen until the first incoming connection. So it is missing right after installing `openssh-server`. Either create it first, or skip the manual check (`ssh.service` already runs `sshd -t` itself before starting):
+> ```BASH
+> sudo mkdir -p /run/sshd && sudo sshd -t && sudo systemctl restart ssh
+> # or
+> sudo systemctl restart ssh    # if it fails: systemctl status ssh
+> ```
+> Also restart even if `ssh` already shows `active`: the package starts it with the default config (password login, no TOTP) before you write the files above.
+
 **Test from a NEW terminal before closing your current session**: `ssh <user>@<host>` should accept your key and then ask `Verification code:` (the 6-digit TOTP). If something breaks, roll back with:
 ```BASH
 sudo rm /etc/ssh/sshd_config.d/00-hardening.conf
