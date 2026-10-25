@@ -1,0 +1,31 @@
+# The host list names real machines on private networks - keep it local.
+condor-host-list
+
+# Shared submit fragment. It pins jobs to named machines, so it carries real
+# hostnames for the same reason condor-host-list does. tools/sanitise.sh flags
+# it on every run - it scans untracked-but-not-ignored files precisely because
+# those are what a `git add .` would sweep in.
+tools/pool-common.inc
+# Command records, captured output, and staged helper scripts name real
+# machines too. Sanitise before tracking any of it.
+logs/
+scripts/
+*~
+
+# Credentials - never track.
+wifi.txt
+*.psk
+*secret*
+
+# LaTeX build products. The sources in latex/ are tracked; the output is not.
+latex/build/
+*.pdf
+
+# Job scratch and test runs. Working area, never tracked.
+run/
+
+# Branding is supplied at deploy time and lives only on the machine that serves
+# it. The dashboard reads /var/lib/pool-web/www, a copy rather than a mount, so
+# nothing on the site depends on this repository. Keeping a company mark in a
+# public repo would buy nothing that tools/pool-web/README does not.
+tools/pool-web/*.png

@@ -1,0 +1,85 @@
+\documentclass[11pt,a4paper]{article}
+\input{preamble}
+
+\begin{document}
+
+\hypersetup{pageanchor=false}
+
+% ===========================================================================
+\begin{center}
+{\LARGE\bfseries Measured, Not Requested\par}
+\vspace{0.45em}
+{\large\bfseries Admission Control in an Opportunistic HTCondor Pool\par}
+\vspace{1.0em}
+{\large Suryanarayan Mondal\par}
+\vspace{0.35em}
+{\normalsize\today\par}
+\vspace{0.4em}
+{\footnotesize\color{RuleGrey}Technical note\par}
+\end{center}
+
+\vspace{0.6em}
+{\color{RuleGrey}\hrule height 0.5pt}
+\vspace{1.1em}
+
+\begin{abstract}
+\noindent
+We describe an opportunistic HTCondor pool assembled from office desktops, in
+which every participant's own machine is both a submit client and an execute
+node, and in which machines move between two subnets that cannot route to each
+other. Nobody logs into a submission host; jobs are submitted from the machine
+their owner already works on.
+
+Two findings generalise beyond this deployment.
+
+First, admission control gated on resource \emph{requests} rather than
+\emph{measurements} systematically underuses machines, and the gate is not where
+policy authors expect it. HTCondor's partitionable-slot \kn{Memory} attribute is
+a reservation ledger consulted by the matchmaker \emph{before} any policy
+expression is evaluated. On a sixteen-core worker running eight jobs that each
+requested 3\,GB and used almost nothing, the slot advertised 2366\,MB free while
+24589\,MB was genuinely available, and the machine refused further work with
+half its cores idle. Publishing measured headroom from a \kn{STARTD\_CRON} job
+overrides that ledger: twelve jobs requesting 3\,GB each then ran concurrently
+on a machine whose configured total was 26942\,MB, with no claim refusals and
+CPU correctly becoming the binding constraint. HTCondor's documentation, and an
+earlier revision of this note, described the attribute as one that could not
+safely be overridden. That was asserted rather than tested, and it is wrong.
+
+Second, eleven separate defects encountered during this deployment shared a
+single shape: the configuration parsed cleanly, the diagnostic tools reported
+correct values, and the feature did nothing. None produced an error, and several
+produced a pool that looked healthy by every command an operator would naturally
+run. We attribute this to three properties that declarative policy systems
+commonly share, and describe the verification discipline that follows from it.
+
+We also report a naming and addressing scheme that lets execute nodes move
+between unroutable subnets while carrying no network configuration of their own,
+deriving at startup which of the entry node's addresses they can reach.
+\end{abstract}
+
+\vspace{0.8em}
+{\color{RuleGrey}\hrule height 0.5pt}
+\vspace{1.2em}
+
+\hypersetup{pageanchor=true}
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% ===========================================================================
+\input{sections/01-introduction}
+\input{sections/02-system}
+\input{sections/03-admission}
+\input{sections/04-ledger}
+\input{sections/05-mechanism}
+\input{sections/06-mobility}
+\input{sections/07-evaluation}
+\input{sections/08-silent-failures}
+\input{sections/09-related}
+\input{sections/10-limitations}
+
+\appendix
+\input{appendix/a-policy-reference}
+\input{appendix/b-reproducibility}
+
+\end{document}

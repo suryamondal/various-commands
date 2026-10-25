@@ -1,0 +1,223 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>SSSD-IOT : Condor Pool Status</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg:#ffffff; --fg:#1a1a1a; --muted:#6b7280; --rule:#d8dce0;
+    --ok:#1f4e79; --warn:#b5761f; --bar:#1f4e79; --barbg:#eceff1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14161a; --fg:#e6e8ea; --muted:#9aa0a6; --rule:#2a2f36;
+            --barbg:#232830; }
+  }
+  /* This is a dashboard, not prose: tables and plots want width, and the
+     usual ~65ch readability cap makes it look like a phone page on a desktop.
+     Wide enough to use the screen, capped so it does not sprawl on ultrawides. */
+  body { background:var(--bg); color:var(--fg); margin:0 auto; max-width:1500px;
+         padding:1.6rem 1.6rem 4rem;
+         font:17px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  /* Flex so the mark sits on the text baseline block rather than on the
+     baseline itself, which would leave it hanging below the descenders. */
+  h1 { font-size:1.3rem; margin:0 0 .2rem; display:flex; align-items:center;
+       gap:.6rem; }
+  .logo { height:1.9em; width:auto; flex:none; border:0; }
+  .sub { color:var(--muted); font-size:.88rem; margin-bottom:1.5rem; }
+  /* width:100% on the table stretches every column to fill, so short numeric
+     ones get padded out with dead space. Let the table size to its content and
+     give the first column the slack instead, which keeps the numbers grouped
+     rather than spread across the screen. */
+  table { border-collapse:collapse; width:100%; font-size:.92rem;
+          table-layout:auto; }
+  td:first-child, th:first-child { width:100%; }
+  th,td { text-align:left; padding:.45rem .6rem; border-bottom:1px solid var(--rule);
+          white-space:nowrap; }
+  td:first-child, th:first-child { padding-left:0; }
+  th { font-weight:600; font-size:.8rem; text-transform:uppercase;
+       letter-spacing:.03em; color:var(--muted); }
+  /* Must match th as well as td: with td.num the body cells right-align while
+     the headers stay left, so every numeric column has its label at one end
+     and its value at the other. */
+  .num { text-align:right; font-variant-numeric:tabular-nums; }
+  th.num { padding-right:.5rem; }
+  .bar { display:block; height:.7rem; background:var(--barbg); border-radius:2px;
+         overflow:hidden; min-width:110px; }
+  /* Annotations under a bar, deliberately quieter than a value in its own
+     column. Everything that is a value in its own right stays at table size. */
+  td small { font-size:.85em; color:var(--muted); }
+  /* First row of a hardware group. Extra space above, not a rule: every td
+     already carries a border-bottom, so a border-top here would render as a
+     doubled 2px line that reads like a rendering fault rather than a
+     deliberate divider. Whitespace separates without adding furniture. */
+  tr.grp td { padding-top:1.15rem; }
+  .bar > i { display:block; height:100%; background:var(--bar); }
+  .no  { color:var(--warn); font-weight:600; }
+  .tag { font-size:.7rem; color:var(--muted); border:1px solid var(--rule);
+         border-radius:3px; padding:0 .3rem; margin-left:.35rem; }
+  .note { color:var(--muted); font-size:.86rem; margin:.9rem 0 2rem; }
+  .note b, .note .tag { color:var(--fg); }
+  .attrs { display:inline-block; margin-top:.3rem; }
+  .attrs code { font-size:.95em; color:var(--fg); }
+  h2 { font-size:1.05rem; margin:2.4rem 0 .6rem; }
+  .tabs { display:flex; gap:.4rem; margin:.2rem 0 .7rem; flex-wrap:wrap; }
+  .tabs button { font:inherit; font-size:.86rem; padding:.34rem .95rem; cursor:pointer;
+                 color:var(--fg); background:transparent; border:1px solid var(--rule);
+                 border-radius:3px; }
+  .tabs button:hover { border-color:var(--muted); }
+  .tabs button[aria-selected="true"] { background:var(--bar); border-color:var(--bar);
+                                       color:#fff; font-weight:600; }
+  /* Scoped to the plot. A bare img rule also caught the logo, which then
+     carried the plot's frame and had to be undone in .logo. */
+  #plot { width:100%; height:auto; border:1px solid var(--rule); border-radius:3px; }
+  .stamp { color:var(--muted); font-size:.78rem; margin-top:.35rem; max-width:80ch; }
+</style>
+
+<h1><img src="logo.png" alt="" class="logo">SSSD-IOT : Condor Pool Status</h1>
+<div class="sub" id="sub">loading&hellip;</div>
+
+<table>
+  <thead><tr>
+    <th>machine</th><th>type</th><th class="num">cpu load</th><th>cores</th>
+    <th>memory offered</th><th class="num">mem free</th>
+    <th class="num">disk free</th><th>start</th>
+  </tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<p class="note">
+  <b>start&nbsp;=&nbsp;no</b>: busy owner, not broken. &nbsp;
+  <b>suspended</b>: frozen, resumes itself. &nbsp;
+  <span class="tag">ledger</span>: reserved capacity, not measured.
+  <br>
+  <span class="attrs"><b>type</b> reads <code>HostBoardClass</code> &middot;
+  <code>OpSysAndVer</code> &middot; <code>Arch</code>.</span>
+</p>
+
+<h2>who is using the pool</h2>
+<table>
+  <thead><tr>
+    <th>user</th><th class="num">running</th><th class="num">idle</th>
+    <th class="num">held</th><th class="num">cores</th><th class="num">memory</th>
+  </tr></thead>
+  <tbody id="users"></tbody>
+</table>
+<p class="note">Current demand. The stacked panel in the plot shows it over time.</p>
+
+<h2>history</h2>
+<div class="tabs" id="tabs">
+  <button data-w="30min">30 minutes</button>
+  <button data-w="6h">6 hours</button>
+  <button data-w="48h">48 hours</button>
+</div>
+<img id="plot" alt="pool history">
+<div class="stamp">Plots regenerate on a schedule; reload to refresh. Tables above are live.</div>
+
+<script>
+// Only this table polls. The plots are static files on disk, so a viewer never
+// causes a query against the collector no matter how many tabs are open.
+function bar(frac) {
+  const p = Math.max(0, Math.min(1, frac)) * 100;
+  return '<span class="bar"><i style="width:' + p.toFixed(0) + '%"></i></span>';
+}
+async function tick() {
+  try {
+    const r = await fetch('live.json?t=' + Date.now(), {cache: 'no-store'});
+    const d = await r.json();
+    const q = d.queue;
+    // TotalCpus, not Cpus. Cpus is what is FREE right now and falls as jobs
+    // run, which would make the pool look like it were shrinking. TotalCpus is
+    // what each machine offers and is stable - and it already accounts for the
+    // entry node's NUM_CPUS cap, which holds it to 2 of its 4.
+    const cores = d.machines.reduce(function (a, m) { return a + (m.cpus_total || 0); }, 0);
+    document.getElementById('sub').textContent =
+      cores + ' CPU cores  ·  running ' + q.running + ', idle ' + q.idle +
+      ', held ' + q.held + '  ·  sampled ' + d.generated;
+    // Group by hardware type, then natural order inside each group.
+    //
+    // The type column is the axis people actually scan - "are any N100s free",
+    // "is the Ryzen busy", "what are the Macs doing" - and a flat A-Z list
+    // interleaves the classes, so that question costs a read of every row.
+    // Grouping answers it by position instead.
+    //
+    // Groups are ordered ALPHABETICALLY by board class, deliberately not by
+    // capability or core count. A capability ordering reads better on the day
+    // it is written and then reshuffles whenever a machine joins, leaves or is
+    // reclassified - and a dashboard whose rows move between glances costs more
+    // than the ordering gains. Alphabetical is arbitrary but STABLE.
+    //
+    // Machines publishing no board sort last as one trailing group, via the
+    // \uffff sentinel: an empty key would sort them to the TOP, putting the
+    // least-identified hardware where the eye lands first.
+    //
+    // numeric:true is the "natural" half - it orders varaha-hpc-2 before
+    // varaha-hpc-10, which a plain string comparison reverses.
+    const NO_BOARD = '\uffff';
+    const rows = d.machines.slice().sort(function (a, b) {
+      const ab = a.board || NO_BOARD, bb = b.board || NO_BOARD;
+      if (ab !== bb) return ab.localeCompare(bb, undefined, {numeric: true});
+      return (a.machine || '').localeCompare(b.machine || '', undefined, {numeric: true});
+    });
+    let prevBoard = null;
+    document.getElementById('rows').innerHTML = rows.map(function (m) {
+      const thisBoard = m.board || NO_BOARD;
+      // Not on the first row: that gap would read as a header margin.
+      const newGroup = prevBoard !== null && thisBoard !== prevBoard;
+      prevBoard = thisBoard;
+      const used = Math.max(0, m.cpus_total - m.cpus_free);
+      const memUsed = m.mem_total ? 1 - (m.mem_adv / m.mem_total) : 0;
+      return '<tr' + (newGroup ? ' class="grp"' : '') + '>' +
+        '<td>' + m.machine + (m.ledger ? '<span class="tag">ledger</span>' : '') + '</td>' +
+        // Board first when the machine publishes one, so the cell reads most
+        // specific to least: jetson - Ubuntu24 - aarch64. Machines with no board
+        // simply start at the OS rather than showing a gap.
+        '<td>' + [m.board, m.os || '?', m.arch || '?'].filter(Boolean).join(' · ') + '</td>' +
+        '<td class="num">' + m.load.toFixed(2) + '</td>' +
+        '<td>' + bar(m.cpus_total ? used / m.cpus_total : 0) +
+          '<small>' + used.toFixed(0) + '/' + m.cpus_total.toFixed(0) +
+          (m.suspended ? ' · ' + m.suspended + ' suspended' : '') + '</small></td>' +
+        '<td>' + bar(memUsed) +
+          '<small>' + (m.mem_adv / 1024).toFixed(1) + ' GB offered</small></td>' +
+        '<td class="num">' + (m.mem_avail / 1024).toFixed(1) + ' GB</td>' +
+        '<td class="num">' + (m.disk_avail / 1024).toFixed(0) + ' GB</td>' +
+        '<td>' + (m.start ? 'yes' : '<span class="no">no</span>') + '</td>' +
+        '</tr>';
+    }).join('');
+
+    document.getElementById('users').innerHTML = (d.users || []).map(function (u) {
+      return '<tr>' +
+        '<td>' + u.user + '</td>' +
+        '<td class="num">' + (u.running || 0) + '</td>' +
+        '<td class="num">' + (u.idle || 0) + '</td>' +
+        '<td class="num">' + (u.held || 0) + '</td>' +
+        '<td class="num">' + (u.req_cpus || 0).toFixed(0) + '</td>' +
+        '<td class="num">' + ((u.req_mem_mb || 0) / 1024).toFixed(1) + ' GB</td>' +
+        '</tr>';
+    }).join('');
+  } catch (e) {
+    document.getElementById('sub').textContent = 'live data unavailable';
+  }
+}
+// One plot at a time. The image is only fetched when its tab is chosen, so
+// landing on the page costs one SVG rather than three.
+const plot = document.getElementById('plot');
+function show(w) {
+  document.querySelectorAll('#tabs button').forEach(function (b) {
+    b.setAttribute('aria-selected', b.dataset.w === w ? 'true' : 'false');
+  });
+  // Cache-bust so a reload picks up a regenerated file rather than a stale one.
+  plot.src = 'pool-' + w + '.svg?t=' + Date.now();
+  plot.alt = 'pool history, last ' + w;
+  try { localStorage.setItem('poolWindow', w); } catch (e) { /* private mode */ }
+}
+document.getElementById('tabs').addEventListener('click', function (e) {
+  if (e.target.dataset && e.target.dataset.w) { show(e.target.dataset.w); }
+});
+let start = '6h';
+try { start = localStorage.getItem('poolWindow') || '6h'; } catch (e) { /* ignore */ }
+show(start);
+
+tick();
+setInterval(tick, 5000);
+</script>

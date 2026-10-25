@@ -1,0 +1,143 @@
+#!/bin/sh
+# Start condor_master, but not before this machine has an address.
+#
+# THE FAILURE THIS EXISTS FOR
+# 2026-09-04, first Mac. launchd started condor_master at boot while en0 was
+# still unaddressed, so DaemonCore fell back to loopback and froze it in:
+#
+#   09/04/26 15:35:24 ** condor_master (CONDOR_MASTER) STARTING UP
+#   09/04/26 15:35:24 DaemonCore: private command socket at <127.0.0.1:0?...>
+#
+# Every earlier start on that machine recorded 172.16.0.134 -- because every
+# earlier start was a manual one, on a running system. Only the boot hits the
+# race, which is why this was invisible through a week of testing.
+#
+# The machine then looks healthy from every angle except the one that matters.
+# The PUBLIC address is right, .master_address is right, condor_config_val
+# reports the right values. Only the private command socket -- the one used for
+# parent/child traffic -- is loopback, so condor_startd and condor_shared_port
+# cannot reach their own master on the same box, exit status 4, and are
+# restarted about every 13 minutes. It stayed out of the pool for 19 hours and
+# the only evidence anywhere was its absence from condor_status.
+#
+# WHY A WRAPPER AND NOT AN ORDERING DIRECTIVE
+# condor.service on the Linux workers carries
+#
+#     After=network-online.target
+#     ExecStartPre=/usr/local/bin/condor-network-select
+#
+# launchd has neither. There is no ordering primitive that expresses "after the
+# network is up", and no pre-start hook. So this script does both jobs and
+# takes the plist's place as the thing launchd spawns:
+#
+#     <key>ProgramArguments</key>
+#     <array>
+#         <string>/usr/local/bin/condor-master-start</string>
+#     </array>
+#
+# exec IS LOAD-BEARING
+# launchd supervises the process it spawned. exec replaces this shell with
+# condor_master in the SAME process, so launchd goes on watching the right pid
+# and KeepAlive keeps working. Without exec it would supervise a shell whose
+# only remaining job is to wait, and a master that died would never be noticed
+# -- the same class of mistake as running condor_master without -f.
+#
+# Install: /usr/local/bin/condor-master-start (root, 0755)
+
+: "${CONDOR_CONFIG:=/opt/condor/etc/condor_config}"
+export CONDOR_CONFIG
+
+CB=/opt/condor/release/bin
+MASTER=/opt/condor/release/sbin/condor_master
+SELECT=/usr/local/bin/condor-network-select
+SEL_OUT=/opt/condor/etc/config.d/55-network-select.config
+STATE=/var/run/condor-network.addrs
+
+# How long to wait for an address before starting anyway.
+#
+# Starting without one reproduces the bug above. But NEVER starting is worse:
+# the machine is then absent with no daemon to ask and no log to read, and a
+# launchd job that waits forever looks identical to one that is working. So
+# this proceeds, loudly, and leaves the recovery to condor-network-change --
+# which is only sound because of the snapshot written below.
+WAIT_MAX=180
+
+log() {
+    logger -t condor-master-start "$@"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') condor-master-start: $*"
+}
+
+IFACE=$("$CB/condor_config_val" NETWORK_INTERFACE 2>/dev/null)
+
+# Apple's own plumbing is never the pool's interface, and 169.254/16 is what
+# macOS self-assigns when DHCP has not answered. A link-local address is not
+# connectivity: baking one in fails exactly the way loopback does, so it does
+# not count as "has an address".
+have_addr() {
+    case "$IFACE" in
+        ''|'*')
+            ifconfig -a inet 2>/dev/null | awk '
+                /^[a-z]/ { i = substr($1, 1, length($1) - 1)
+                           skip = (i ~ /^(lo|gif|stf|anpi|awdl|llw|utun|bridge|ap)[0-9]*$/) }
+                /^[ \t]*inet / && !skip && $2 !~ /^169\.254\./ { found = 1 }
+                END { exit !found }'
+            ;;
+        *[!0-9.]*)          # an interface name
+            ifconfig "$IFACE" inet 2>/dev/null | awk '
+                /^[ \t]*inet / && $2 !~ /^169\.254\./ { found = 1 }
+                END { exit !found }'
+            ;;
+        *)                  # a literal address: do we hold it yet
+            ifconfig -a inet 2>/dev/null | awk -v want="$IFACE" '
+                /^[ \t]*inet / && $2 == want { found = 1 }
+                END { exit !found }'
+            ;;
+    esac
+}
+
+snapshot() {
+    ifconfig -a inet 2>/dev/null | awk '
+        /^[a-z]/ { i = substr($1, 1, length($1) - 1)
+                   skip = (i ~ /^(lo|gif|stf|anpi|awdl|llw|utun|bridge|ap)[0-9]*$/) }
+        /^[ \t]*inet / && !skip { print i " " $2 }
+    ' | sort | tr '\n' ';'
+}
+
+i=0
+while [ "$i" -lt "$WAIT_MAX" ]; do
+    have_addr && break
+    sleep 1
+    i=$((i + 1))
+done
+
+if have_addr; then
+    [ "$i" -gt 0 ] && log "waited ${i}s for a routable address on ${IFACE:-any}"
+else
+    log "NO routable address on ${IFACE:-any} after ${WAIT_MAX}s; starting anyway so the machine is at least diagnosable. condor-network-change will restart it when addressing appears."
+fi
+
+# The ExecStartPre half: decide which of the entry node's two addresses applies
+# from here, BEFORE the daemons resolve anything. Fail-safe by design -- if the
+# collector cannot be reached it writes "use the primary", which is stock
+# behaviour, rather than leaving a stale name in place.
+if [ -x "$SELECT" ]; then
+    "$SELECT"
+    log "derivation: $(grep -s '^PRIVATE_NETWORK_NAME' "$SEL_OUT" || echo 'none set, primary address will be used')"
+fi
+
+# RECORD WHAT CONDOR IS ABOUT TO START WITH. This closes a hole that would
+# otherwise survive everything above.
+#
+# condor-network-change compares the current addresses against this file and
+# restarts when they differ. If the file were written by the watcher's own
+# first tick instead, an address arriving in the gap between condor starting
+# and that tick would be recorded as normal -- and a master that had already
+# frozen loopback would then never be restarted, because from that moment on
+# nothing ever changes again. Writing it here means the reference is always
+# "what the master actually resolved", not "what happened to be true a minute
+# later".
+snapshot > "$STATE" 2>/dev/null
+log "recorded boot snapshot: $(cat "$STATE" 2>/dev/null)"
+
+log "exec $MASTER -f"
+exec "$MASTER" -f
