@@ -1,0 +1,17 @@
+# /etc/systemd/system/lock-before-sleep.service
+# Locks every session before any suspend/hibernate, whoever triggers it
+# (UPower at critical battery, `systemctl hibernate`, lid close, menu).
+# Runs before sleep.target, i.e. before systemd-sleep freezes user.slice,
+# so the screen locker can still react; the 1 s pause lets it lock and blank
+# the screen before the hibernate image is taken.
+[Unit]
+Description=Lock all sessions before suspend/hibernate
+Before=sleep.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/loginctl lock-sessions
+ExecStart=/usr/bin/sleep 1
+
+[Install]
+WantedBy=sleep.target
