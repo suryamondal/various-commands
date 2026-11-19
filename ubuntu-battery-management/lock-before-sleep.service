@@ -1,0 +1,14 @@
+# /etc/systemd/system/lock-before-sleep.service
+# Lock every session before any suspend/hibernate, whatever triggers it.
+[Unit]
+Description=Lock all sessions before suspend/hibernate
+Before=sleep.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/loginctl lock-sessions
+# give the locker time to blank the screen before the image is taken
+ExecStart=/usr/bin/sleep 1
+
+[Install]
+WantedBy=sleep.target
