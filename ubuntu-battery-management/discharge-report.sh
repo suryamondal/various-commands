@@ -1,15 +1,8 @@
 #!/usr/bin/env bash
 # discharge-report.sh - analyse the last on-battery run from UPower's history.
-#
-# Prints every percentage step (to spot jumps such as 9% -> 2%), the runtime,
-# the energy actually drawn (power integrated over time) and compares it with
-# what the fuel gauge claims, which tells you how far the % reading can be
-# trusted.
-#
 # Usage: discharge-report.sh [history-id]
-#   history-id: the part after "history-charge-" in /var/lib/upower, e.g.
-#               DELL_02HHX539-42-1939 (default: the laptop battery file that
-#               was updated last).
+#   history-id: part after "history-charge-" in /var/lib/upower
+#               (default: the battery file updated last)
 set -eu
 
 D=/var/lib/upower
